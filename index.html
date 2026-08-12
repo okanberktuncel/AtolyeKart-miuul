@@ -449,6 +449,55 @@
     color: var(--text-muted);
     font-size: 0.85rem;
   }
+
+  /* QR panel */
+  .qr-panel {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    box-shadow: 0 8px 24px rgba(58, 49, 41, 0.15);
+    z-index: 20;
+  }
+
+  .qr-panel-title {
+    display: block;
+    text-align: center;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+
+  .qr-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .qr-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.68rem;
+    color: var(--text-muted);
+  }
+
+  .qr-item svg {
+    border-radius: 4px;
+  }
+
+  @media (max-width: 520px) {
+    .qr-panel { padding: 10px; bottom: 12px; right: 12px; }
+    .qr-panel-title { display: none; }
+    .qr-grid { gap: 8px; }
+    .qr-item svg { width: 48px; height: 48px; }
+  }
 </style>
 </head>
 <body>
@@ -457,10 +506,12 @@
 
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="src/vendor/qrcode-react.umd.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
 <script type="text/babel" data-type="module">
-  const { useState } = React;
+  const { useState, useEffect } = React;
+  const { QRCodeSVG } = QRCodeReact;
 
   const PRODUCTS = [
     {
@@ -569,6 +620,55 @@
     orders: [],
   };
 
+  function parseHash() {
+    const parts = window.location.hash.replace(/^#\/?/, '').split('/').filter(Boolean);
+    if (parts[0] === 'urunler') {
+      const category = CATEGORIES.some((c) => c.id === parts[1]) ? parts[1] : 'tumu';
+      return { page: 'urunler', category };
+    }
+    if (parts[0] === 'profil' || parts[0] === 'sepet') {
+      return { page: parts[0], category: 'tumu' };
+    }
+    return { page: 'anasayfa', category: 'tumu' };
+  }
+
+  function buildHash(page, category) {
+    if (page === 'urunler') {
+      return category && category !== 'tumu' ? `#/urunler/${category}` : '#/urunler';
+    }
+    if (page === 'anasayfa') return '#/';
+    return `#/${page}`;
+  }
+
+  function getBaseUrl() {
+    return window.location.origin + window.location.pathname;
+  }
+
+  function QRPanel() {
+    const baseUrl = getBaseUrl();
+    const qrCodes = [
+      { label: 'Anasayfa', value: baseUrl },
+      ...CATEGORIES.filter((c) => c.id !== 'tumu').map((cat) => ({
+        label: cat.label,
+        value: `${baseUrl}${buildHash('urunler', cat.id)}`,
+      })),
+    ];
+
+    return (
+      <div className="qr-panel">
+        <span className="qr-panel-title">Telefonunla Tara</span>
+        <div className="qr-grid">
+          {qrCodes.map((qr) => (
+            <div className="qr-item" key={qr.label}>
+              <QRCodeSVG value={qr.value} size={64} bgColor="#ffffff" fgColor="#3a3129" />
+              <span>{qr.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   function NavBar({ page, cartCount, onNavigate }) {
     const links = [
       { id: 'anasayfa', label: 'Anasayfa' },
@@ -602,14 +702,17 @@
 
   function Anasayfa({ onNavigate }) {
     return (
-      <header className="hero">
-        <div className="brand">AtölyeKart</div>
-        <p className="tagline">Seri üretim değil, elden ele geçen emek.</p>
-        <div className="divider"></div>
-        <button className="cta-button" onClick={() => onNavigate('urunler')}>
-          Ürünleri Keşfet
-        </button>
-      </header>
+      <React.Fragment>
+        <header className="hero">
+          <div className="brand">AtölyeKart</div>
+          <p className="tagline">Seri üretim değil, elden ele geçen emek.</p>
+          <div className="divider"></div>
+          <button className="cta-button" onClick={() => onNavigate('urunler')}>
+            Ürünleri Keşfet
+          </button>
+        </header>
+        <QRPanel />
+      </React.Fragment>
     );
   }
 
@@ -775,9 +878,30 @@
   }
 
   function App() {
-    const [page, setPage] = useState('anasayfa');
-    const [activeCategory, setActiveCategory] = useState('tumu');
+    const initialRoute = parseHash();
+    const [page, setPage] = useState(initialRoute.page);
+    const [activeCategory, setActiveCategory] = useState(initialRoute.category);
     const [cart, setCart] = useState([]);
+
+    useEffect(() => {
+      function onHashChange() {
+        const route = parseHash();
+        setPage(route.page);
+        setActiveCategory(route.category);
+      }
+      window.addEventListener('hashchange', onHashChange);
+      return () => window.removeEventListener('hashchange', onHashChange);
+    }, []);
+
+    function navigate(newPage) {
+      setPage(newPage);
+      window.location.hash = buildHash(newPage, newPage === 'urunler' ? activeCategory : 'tumu');
+    }
+
+    function selectCategory(catId) {
+      setActiveCategory(catId);
+      window.location.hash = buildHash('urunler', catId);
+    }
 
     const cartCount = cart.reduce((sum, item) => sum + item.qty, 0);
 
@@ -809,12 +933,12 @@
 
     let content;
     if (page === 'anasayfa') {
-      content = <Anasayfa onNavigate={setPage} />;
+      content = <Anasayfa onNavigate={navigate} />;
     } else if (page === 'urunler') {
       content = (
         <Urunler
           activeCategory={activeCategory}
-          onSelectCategory={setActiveCategory}
+          onSelectCategory={selectCategory}
           onAddToCart={addToCart}
         />
       );
@@ -826,7 +950,7 @@
 
     return (
       <div>
-        <NavBar page={page} cartCount={cartCount} onNavigate={setPage} />
+        <NavBar page={page} cartCount={cartCount} onNavigate={navigate} />
         {content}
         <Footer />
       </div>
