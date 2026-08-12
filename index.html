@@ -498,6 +498,100 @@
     .qr-grid { gap: 8px; }
     .qr-item svg { width: 48px; height: 48px; }
   }
+
+  /* Nav CTA + Randevu penceresi */
+  .nav-link-cta {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .nav-link-cta:hover {
+    background: var(--accent-dark);
+    color: #fff;
+  }
+
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(58, 49, 41, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 50;
+  }
+
+  .modal-panel {
+    background: var(--card-bg);
+    border-radius: 8px;
+    max-width: 420px;
+    width: 100%;
+    padding: 28px;
+    box-shadow: 0 20px 48px rgba(58, 49, 41, 0.25);
+    position: relative;
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: none;
+    border: none;
+    font-size: 1.3rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    line-height: 1;
+    font-family: inherit;
+  }
+
+  .modal-close:hover {
+    color: var(--accent-dark);
+  }
+
+  .modal-title {
+    font-size: 1.3rem;
+    color: var(--text-main);
+    margin-bottom: 8px;
+    padding-right: 20px;
+  }
+
+  .modal-desc {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+  }
+
+  .form-field {
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .form-field label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .form-field input {
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 10px 12px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    color: var(--text-main);
+  }
+
+  .form-field input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  .modal-success {
+    text-align: center;
+    color: var(--text-main);
+    padding: 10px 0 4px;
+  }
 </style>
 </head>
 <body>
@@ -620,6 +714,20 @@
     orders: [],
   };
 
+  const WEBHOOK_URL = ''; // TODO: n8n webhook adresi hazır olduğunda buraya yapıştır
+
+  function sendWebhook(event, payload) {
+    if (!WEBHOOK_URL) {
+      console.info(`[sendWebhook] WEBHOOK_URL henüz ayarlanmadı, "${event}" gönderilmedi.`, payload);
+      return Promise.resolve();
+    }
+    return fetch(WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ event, timestamp: new Date().toISOString(), ...payload }),
+    });
+  }
+
   function parseHash() {
     const parts = window.location.hash.replace(/^#\/?/, '').split('/').filter(Boolean);
     if (parts[0] === 'urunler') {
@@ -669,7 +777,80 @@
     );
   }
 
-  function NavBar({ page, cartCount, onNavigate }) {
+  function AppointmentModal({ onClose }) {
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+    const [submitted, setSubmitted] = useState(false);
+
+    useEffect(() => {
+      document.body.style.overflow = 'hidden';
+      function onKeyDown(e) {
+        if (e.key === 'Escape') onClose();
+      }
+      window.addEventListener('keydown', onKeyDown);
+      return () => {
+        document.body.style.overflow = '';
+        window.removeEventListener('keydown', onKeyDown);
+      };
+    }, []);
+
+    function handleSubmit(e) {
+      e.preventDefault();
+      sendWebhook('appointment.request', { name, email });
+      setSubmitted(true);
+    }
+
+    return (
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
+          <button className="modal-close" onClick={onClose} aria-label="Kapat">×</button>
+          {submitted ? (
+            <React.Fragment>
+              <h2 className="modal-title">Talebiniz alındı</h2>
+              <p className="modal-success">En kısa sürede sizinle iletişime geçeceğiz.</p>
+              <button className="btn" style={{ width: '100%', marginTop: 12 }} onClick={onClose}>
+                Kapat
+              </button>
+            </React.Fragment>
+          ) : (
+            <React.Fragment>
+              <h2 className="modal-title">Müşteri Temsilcisi ile Randevu Talep Et</h2>
+              <p className="modal-desc">
+                Size en kısa sürede dönüş yapabilmemiz için ad soyad ve e-posta adresinizi paylaşın.
+              </p>
+              <form onSubmit={handleSubmit}>
+                <div className="form-field">
+                  <label htmlFor="appointment-name">Ad Soyad</label>
+                  <input
+                    id="appointment-name"
+                    type="text"
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                  />
+                </div>
+                <div className="form-field">
+                  <label htmlFor="appointment-email">E-posta</label>
+                  <input
+                    id="appointment-email"
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
+                <button type="submit" className="btn" style={{ width: '100%' }}>
+                  Randevu Talebi Gönder
+                </button>
+              </form>
+            </React.Fragment>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  function NavBar({ page, cartCount, onNavigate, onOpenAppointment }) {
     const links = [
       { id: 'anasayfa', label: 'Anasayfa' },
       { id: 'urunler', label: 'Ürünler' },
@@ -694,6 +875,11 @@
                 </button>
               </li>
             ))}
+            <li>
+              <button className="nav-link nav-link-cta" onClick={onOpenAppointment}>
+                Randevu Talep Et
+              </button>
+            </li>
           </ul>
         </div>
       </nav>
@@ -882,6 +1068,7 @@
     const [page, setPage] = useState(initialRoute.page);
     const [activeCategory, setActiveCategory] = useState(initialRoute.category);
     const [cart, setCart] = useState([]);
+    const [appointmentOpen, setAppointmentOpen] = useState(false);
 
     useEffect(() => {
       function onHashChange() {
@@ -950,9 +1137,17 @@
 
     return (
       <div>
-        <NavBar page={page} cartCount={cartCount} onNavigate={navigate} />
+        <NavBar
+          page={page}
+          cartCount={cartCount}
+          onNavigate={navigate}
+          onOpenAppointment={() => setAppointmentOpen(true)}
+        />
         {content}
         <Footer />
+        {appointmentOpen && (
+          <AppointmentModal onClose={() => setAppointmentOpen(false)} />
+        )}
       </div>
     );
   }
