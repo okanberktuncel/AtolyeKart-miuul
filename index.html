@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AtölyeKart | Ürün Kataloğu</title>
+<style>
+  :root {
+    --bg: #faf6f1;
+    --card-bg: #ffffff;
+    --text-main: #3a3129;
+    --text-muted: #7d7267;
+    --accent: #b5652f;
+    --accent-dark: #8f4d22;
+    --border: #e9e0d4;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Georgia', 'Times New Roman', serif;
+    background: var(--bg);
+    color: var(--text-main);
+    line-height: 1.6;
+    padding-bottom: 60px;
+  }
+
+  /* NavBar */
+  .navbar {
+    position: sticky;
+    top: 0;
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border);
+    z-index: 10;
+  }
+
+  .navbar-inner {
+    max-width: 1080px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .nav-brand {
+    font-weight: 700;
+    color: var(--accent-dark);
+    font-size: 1.2rem;
+    letter-spacing: 0.03em;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 6px;
+    list-style: none;
+  }
+
+  .nav-link {
+    background: none;
+    border: none;
+    font-family: inherit;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    padding: 8px 14px;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+
+  .nav-link:hover {
+    color: var(--accent-dark);
+  }
+
+  .nav-link.active {
+    color: #fff;
+    background: var(--accent);
+  }
+
+  .cart-count {
+    display: inline-block;
+    margin-left: 6px;
+    background: var(--accent-dark);
+    color: #fff;
+    font-size: 0.7rem;
+    border-radius: 10px;
+    padding: 1px 7px;
+  }
+
+  .nav-link.active .cart-count {
+    background: #fff;
+    color: var(--accent-dark);
+  }
+
+  /* Hero / Anasayfa */
+  .hero {
+    text-align: center;
+    padding: 56px 20px 40px;
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  .hero .brand {
+    font-size: 2.4rem;
+    letter-spacing: 0.04em;
+    color: var(--accent-dark);
+    font-weight: 700;
+  }
+
+  .hero .tagline {
+    margin-top: 10px;
+    color: var(--text-muted);
+    font-size: 1.05rem;
+    font-style: italic;
+  }
+
+  .hero .divider {
+    width: 60px;
+    height: 2px;
+    background: var(--accent);
+    margin: 24px auto 0;
+  }
+
+  .cta-button {
+    margin-top: 32px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 14px 32px;
+    font-size: 1rem;
+    border-radius: 3px;
+    cursor: pointer;
+    font-family: inherit;
+    letter-spacing: 0.03em;
+    transition: background 0.2s ease;
+  }
+
+  .cta-button:hover {
+    background: var(--accent-dark);
+  }
+
+  /* Ürünler sayfası */
+  .page-title {
+    max-width: 1080px;
+    margin: 40px auto 0;
+    padding: 0 20px;
+    font-size: 1.6rem;
+    color: var(--text-main);
+  }
+
+  .category-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    max-width: 1080px;
+    margin: 20px auto 0;
+    padding: 0 20px;
+  }
+
+  .category-tab {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 8px 18px;
+    border-radius: 20px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .category-tab.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  main {
+    max-width: 1080px;
+    margin: 0 auto;
+  }
+
+  .catalog {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 32px;
+    margin-top: 32px;
+    padding: 0 20px;
+  }
+
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+
+  .card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 28px rgba(58, 49, 41, 0.12);
+  }
+
+  .card-image {
+    height: 220px;
+    overflow: hidden;
+  }
+
+  .card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .card-body {
+    padding: 22px 24px 26px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+
+  .category-label {
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .card-title {
+    font-size: 1.3rem;
+    margin-bottom: 10px;
+    color: var(--text-main);
+  }
+
+  .card-desc {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    flex: 1;
+    margin-bottom: 18px;
+  }
+
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid var(--border);
+    padding-top: 16px;
+  }
+
+  .price {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--accent-dark);
+  }
+
+  .price .unit {
+    font-size: 0.78rem;
+    font-weight: 400;
+    color: var(--text-muted);
+  }
+
+  .btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 10px 18px;
+    font-size: 0.85rem;
+    border-radius: 3px;
+    cursor: pointer;
+    font-family: inherit;
+    letter-spacing: 0.03em;
+    transition: background 0.2s ease;
+  }
+
+  .btn:hover {
+    background: var(--accent-dark);
+  }
+
+  .note {
+    display: inline-block;
+    margin-top: 14px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+  }
+
+  /* Sepet & Profil */
+  .cart-page, .profile-page {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 40px 20px;
+  }
+
+  .cart-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+
+  .cart-item img {
+    width: 64px;
+    height: 64px;
+    object-fit: cover;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+
+  .cart-item-info {
+    flex: 1;
+  }
+
+  .cart-item-info h3 {
+    font-size: 1.05rem;
+    margin-bottom: 4px;
+  }
+
+  .cart-item-info .cat {
+    font-size: 0.75rem;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .qty-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .qty-control button {
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--border);
+    background: #fff;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-family: inherit;
+  }
+
+  .cart-item-remove {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    text-decoration: underline;
+    cursor: pointer;
+    margin-left: 12px;
+    font-family: inherit;
+  }
+
+  .cart-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--accent-dark);
+  }
+
+  .empty-cart {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 60px 0;
+  }
+
+  .profile-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 28px;
+  }
+
+  .profile-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.95rem;
+  }
+
+  .profile-row:last-child {
+    border-bottom: none;
+  }
+
+  .profile-row .label {
+    color: var(--text-muted);
+  }
+
+  .profile-orders-empty {
+    margin-top: 20px;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    text-align: center;
+  }
+
+  /* Social + footer */
+  .social-links {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 18px;
+  }
+
+  .social-links a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    color: var(--accent-dark);
+    transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+  }
+
+  .social-links a:hover {
+    background: var(--accent);
+    color: #fff;
+    transform: translateY(-2px);
+  }
+
+  .social-links svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+  }
+
+  footer {
+    text-align: center;
+    margin-top: 64px;
+    padding-top: 28px;
+    border-top: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 0.85rem;
+  }
+</style>
+</head>
+<body>
+
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<script type="text/babel" data-type="module">
+  const { useState } = React;
+
+  const PRODUCTS = [
+    {
+      id: 'seramik-kupa',
+      category: 'seramik',
+      title: 'Toprak Ton Kupa',
+      description: 'El çarkında şekillendirilmiş, fırında iki kez pişirilmiş kupa. Her parça birbirinden hafifçe farklı desen ve dokuya sahip — tamamen aynısı yok. Günlük kahve ve çay keyfiniz için.',
+      price: 320,
+      unit: 'adet',
+      image: 'https://images.unsplash.com/photo-1536936812504-0e77dc3f0b40?fm=jpg&q=60&w=800&auto=format&fit=crop',
+    },
+    {
+      id: 'seramik-vazo',
+      category: 'seramik',
+      title: 'Toprak Kahve Vazo',
+      description: 'Elde şekillendirilmiş, mat sırlı vazo. Kuru veya taze çiçek düzenlemeleri için sade ve sıcak bir dokunuş.',
+      price: 380,
+      unit: 'adet',
+      image: 'https://images.unsplash.com/photo-1597696929736-6d13bed8e6a8?fm=jpg&q=60&w=800&auto=format&fit=crop',
+    },
+    {
+      id: 'seramik-tabak',
+      category: 'seramik',
+      title: 'Renkli Desenli Tabak',
+      description: 'Elde boyanmış renkli sıçrama desenli servis tabağı. Kahvaltı sofralarına ve pastalarınıza eşlik eder.',
+      price: 260,
+      unit: 'adet',
+      image: 'https://images.unsplash.com/photo-1745828186668-d1131baac067?fm=jpg&q=60&w=800&auto=format&fit=crop',
+    },
+    {
+      id: 'seramik-kase',
+      category: 'seramik',
+      title: 'Sarı Ton Kase',
+      description: 'Yumuşak sarı-yeşil tonlarda, çorba ve salata servisi için elde şekillendirilmiş kase.',
+      price: 240,
+      unit: 'adet',
+      image: 'https://images.unsplash.com/photo-1769163211419-f6befc56b8ff?fm=jpg&q=60&w=800&auto=format&fit=crop',
+    },
+    {
+      id: 'mum-sandal',
+      category: 'mum',
+      title: 'Sandal Ağacı Soya Mumu',
+      description: '%100 doğal soya balmumundan, elle dökülerek hazırlanmış kokulu mum. Cam kavanozu yeniden kullanılabilir. Ortalama 40 saat yanma süresi.',
+      price: 245,
+      unit: 'adet',
+      image: 'https://images.unsplash.com/photo-1663089889826-0575c6ae19de?fm=jpg&q=60&w=800&auto=format&fit=crop',
+    },
+    {
+      id: 'mum-karanlik',
+      category: 'mum',
+      title: 'Gece Kokusu Mumu',
+      description: 'Odunsu ve baharatlı notalar taşıyan, akşam saatleri için elde dökülmüş özel seri mum.',
+      price: 270,
+      unit: 'adet',
+      image: 'https://images.unsplash.com/photo-1714376880837-f40388a805e5?fm=jpg&q=60&w=800&auto=format&fit=crop',
+    },
+    {
+      id: 'mum-kavanoz',
+      category: 'mum',
+      title: 'Cam Kavanoz Mumu',
+      description: 'Şeffaf cam kavanoz içinde, hafif ve ferah kokulu soya mumu. Bitince saksı veya kalemlik olarak kullanılabilir.',
+      price: 220,
+      unit: 'adet',
+      image: 'https://images.unsplash.com/photo-1607284235728-e0d256e519f9?fm=jpg&q=60&w=800&auto=format&fit=crop',
+    },
+    {
+      id: 'taki-kupe',
+      category: 'taki',
+      title: 'Ay Taşı Damla Küpe',
+      description: 'Doğal ay taşı ve reçine detaylarla el işçiliğiyle bir araya getirilmiş küpe. Hipoalerjenik çelik mekanizma ile hassas ciltlere de uygun.',
+      price: 410,
+      unit: 'çift',
+      image: 'https://images.unsplash.com/photo-1756792340190-2039b9a1787d?fm=jpg&q=60&w=800&auto=format&fit=crop',
+    },
+    {
+      id: 'taki-kolye',
+      category: 'taki',
+      title: 'Boncuk Detaylı Kolye',
+      description: 'Doğal taş boncuklarla elde dizilmiş, ince zincirli kolye. Günlük kombinlere sade bir vurgu katar.',
+      price: 350,
+      unit: 'adet',
+      image: 'https://images.unsplash.com/photo-1654699991520-aaaf4dd2608b?fm=jpg&q=60&w=800&auto=format&fit=crop',
+    },
+    {
+      id: 'taki-bileklik',
+      category: 'taki',
+      title: 'İnce Zincir Bileklik',
+      description: 'Zarif ve ince tasarımlı, elde birleştirilmiş halka detaylı bileklik. Tek başına veya katlı kombinlerde şık durur.',
+      price: 290,
+      unit: 'adet',
+      image: 'https://images.unsplash.com/photo-1602527428055-a2526fabdc9f?fm=jpg&q=60&w=800&auto=format&fit=crop',
+    },
+  ];
+
+  const CATEGORIES = [
+    { id: 'tumu', label: 'Tümü' },
+    { id: 'seramik', label: 'Seramik' },
+    { id: 'mum', label: 'Mum' },
+    { id: 'taki', label: 'Takı' },
+  ];
+
+  const MOCK_USER = {
+    name: 'Ayşe Yılmaz',
+    email: 'ayse.yilmaz@example.com',
+    address: 'Caferağa Mah. Moda Cad. No:14, Kadıköy / İstanbul',
+    orders: [],
+  };
+
+  function NavBar({ page, cartCount, onNavigate }) {
+    const links = [
+      { id: 'anasayfa', label: 'Anasayfa' },
+      { id: 'urunler', label: 'Ürünler' },
+      { id: 'profil', label: 'Profil' },
+      { id: 'sepet', label: 'Sepet' },
+    ];
+    return (
+      <nav className="navbar">
+        <div className="navbar-inner">
+          <span className="nav-brand">AtölyeKart</span>
+          <ul className="nav-links">
+            {links.map((link) => (
+              <li key={link.id}>
+                <button
+                  className={"nav-link" + (page === link.id ? " active" : "")}
+                  onClick={() => onNavigate(link.id)}
+                >
+                  {link.label}
+                  {link.id === 'sepet' && cartCount > 0 && (
+                    <span className="cart-count">{cartCount}</span>
+                  )}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </nav>
+    );
+  }
+
+  function Anasayfa({ onNavigate }) {
+    return (
+      <header className="hero">
+        <div className="brand">AtölyeKart</div>
+        <p className="tagline">Seri üretim değil, elden ele geçen emek.</p>
+        <div className="divider"></div>
+        <button className="cta-button" onClick={() => onNavigate('urunler')}>
+          Ürünleri Keşfet
+        </button>
+      </header>
+    );
+  }
+
+  function CategoryTabs({ activeCategory, onSelect }) {
+    return (
+      <div className="category-tabs">
+        {CATEGORIES.map((cat) => (
+          <button
+            key={cat.id}
+            className={"category-tab" + (activeCategory === cat.id ? " active" : "")}
+            onClick={() => onSelect(cat.id)}
+          >
+            {cat.label}
+          </button>
+        ))}
+      </div>
+    );
+  }
+
+  function ProductCard({ product, onAddToCart }) {
+    return (
+      <article className="card">
+        <div className="card-image">
+          <img src={product.image} alt={product.title} />
+        </div>
+        <div className="card-body">
+          <span className="category-label">{product.category}</span>
+          <h2 className="card-title">{product.title}</h2>
+          <p className="card-desc">{product.description}</p>
+          <div className="card-footer">
+            <span className="price">
+              ₺{product.price}
+              <span className="unit"> / {product.unit}</span>
+            </span>
+            <button className="btn" onClick={() => onAddToCart(product.id)}>
+              Sepete Ekle
+            </button>
+          </div>
+          <span className="note">El yapımı · Sınırlı sayıda üretim</span>
+        </div>
+      </article>
+    );
+  }
+
+  function Urunler({ activeCategory, onSelectCategory, onAddToCart }) {
+    const filtered = activeCategory === 'tumu'
+      ? PRODUCTS
+      : PRODUCTS.filter((p) => p.category === activeCategory);
+
+    return (
+      <div>
+        <h1 className="page-title">Ürünler</h1>
+        <CategoryTabs activeCategory={activeCategory} onSelect={onSelectCategory} />
+        <main>
+          <div className="catalog">
+            {filtered.map((product) => (
+              <ProductCard key={product.id} product={product} onAddToCart={onAddToCart} />
+            ))}
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  function Profil() {
+    return (
+      <div className="profile-page">
+        <h1 className="page-title" style={{ margin: '0 0 24px', padding: 0 }}>Profil</h1>
+        <div className="profile-card">
+          <div className="profile-row">
+            <span className="label">Ad Soyad</span>
+            <span>{MOCK_USER.name}</span>
+          </div>
+          <div className="profile-row">
+            <span className="label">E-posta</span>
+            <span>{MOCK_USER.email}</span>
+          </div>
+          <div className="profile-row">
+            <span className="label">Adres</span>
+            <span>{MOCK_USER.address}</span>
+          </div>
+        </div>
+        {MOCK_USER.orders.length === 0 && (
+          <p className="profile-orders-empty">Henüz bir siparişiniz yok.</p>
+        )}
+      </div>
+    );
+  }
+
+  function CartItemRow({ item, product, onUpdateQty, onRemove }) {
+    return (
+      <div className="cart-item">
+        <img src={product.image} alt={product.title} />
+        <div className="cart-item-info">
+          <span className="cat">{product.category}</span>
+          <h3>{product.title}</h3>
+          <span className="price">
+            ₺{product.price}
+            <span className="unit"> / {product.unit}</span>
+          </span>
+        </div>
+        <div className="qty-control">
+          <button onClick={() => onUpdateQty(product.id, -1)}>-</button>
+          <span>{item.qty}</span>
+          <button onClick={() => onUpdateQty(product.id, 1)}>+</button>
+        </div>
+        <button className="cart-item-remove" onClick={() => onRemove(product.id)}>
+          Kaldır
+        </button>
+      </div>
+    );
+  }
+
+  function Sepet({ cart, onUpdateQty, onRemove }) {
+    if (cart.length === 0) {
+      return (
+        <div className="cart-page">
+          <h1 className="page-title" style={{ margin: '0 0 24px', padding: 0 }}>Sepet</h1>
+          <p className="empty-cart">Sepetiniz boş.</p>
+        </div>
+      );
+    }
+
+    const total = cart.reduce((sum, item) => {
+      const product = PRODUCTS.find((p) => p.id === item.productId);
+      return sum + product.price * item.qty;
+    }, 0);
+
+    return (
+      <div className="cart-page">
+        <h1 className="page-title" style={{ margin: '0 0 24px', padding: 0 }}>Sepet</h1>
+        {cart.map((item) => {
+          const product = PRODUCTS.find((p) => p.id === item.productId);
+          return (
+            <CartItemRow
+              key={item.productId}
+              item={item}
+              product={product}
+              onUpdateQty={onUpdateQty}
+              onRemove={onRemove}
+            />
+          );
+        })}
+        <div className="cart-summary">
+          <span>Toplam</span>
+          <span>₺{total}</span>
+        </div>
+      </div>
+    );
+  }
+
+  function Footer() {
+    return (
+      <footer>
+        <div className="social-links">
+          <a href="https://www.instagram.com/okanikov/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+            <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zM12 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+          </a>
+        </div>
+        &copy; 2026 AtölyeKart — Elde şekillenen, atölyede doğan ürünler.
+      </footer>
+    );
+  }
+
+  function App() {
+    const [page, setPage] = useState('anasayfa');
+    const [activeCategory, setActiveCategory] = useState('tumu');
+    const [cart, setCart] = useState([]);
+
+    const cartCount = cart.reduce((sum, item) => sum + item.qty, 0);
+
+    function addToCart(productId) {
+      setCart((prev) => {
+        const existing = prev.find((item) => item.productId === productId);
+        if (existing) {
+          return prev.map((item) =>
+            item.productId === productId ? { ...item, qty: item.qty + 1 } : item
+          );
+        }
+        return [...prev, { productId, qty: 1 }];
+      });
+    }
+
+    function updateQty(productId, delta) {
+      setCart((prev) =>
+        prev
+          .map((item) =>
+            item.productId === productId ? { ...item, qty: item.qty + delta } : item
+          )
+          .filter((item) => item.qty > 0)
+      );
+    }
+
+    function removeFromCart(productId) {
+      setCart((prev) => prev.filter((item) => item.productId !== productId));
+    }
+
+    let content;
+    if (page === 'anasayfa') {
+      content = <Anasayfa onNavigate={setPage} />;
+    } else if (page === 'urunler') {
+      content = (
+        <Urunler
+          activeCategory={activeCategory}
+          onSelectCategory={setActiveCategory}
+          onAddToCart={addToCart}
+        />
+      );
+    } else if (page === 'profil') {
+      content = <Profil />;
+    } else {
+      content = <Sepet cart={cart} onUpdateQty={updateQty} onRemove={removeFromCart} />;
+    }
+
+    return (
+      <div>
+        <NavBar page={page} cartCount={cartCount} onNavigate={setPage} />
+        {content}
+        <Footer />
+      </div>
+    );
+  }
+
+  const root = ReactDOM.createRoot(document.getElementById('root'));
+  root.render(<App />);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AtölyeKart | Ürün Kataloğu</title>
+<style>
+  :root {
+    --bg: #faf6f1;
+    --card-bg: #ffffff;
+    --text-main: #3a3129;
+    --text-muted: #7d7267;
+    --accent: #b5652f;
+    --accent-dark: #8f4d22;
+    --border: #e9e0d4;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Georgia', 'Times New Roman', serif;
+    background: var(--bg);
+    color: var(--text-main);
+    line-height: 1.6;
+    padding: 0 20px 60px;
+  }
+
+  header {
+    text-align: center;
+    padding: 56px 20px 40px;
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  header .brand {
+    font-size: 2.4rem;
+    letter-spacing: 0.04em;
+    color: var(--accent-dark);
+    font-weight: 700;
+  }
+
+  header .tagline {
+    margin-top: 10px;
+    color: var(--text-muted);
+    font-size: 1.05rem;
+    font-style: italic;
+  }
+
+  header .divider {
+    width: 60px;
+    height: 2px;
+    background: var(--accent);
+    margin: 24px auto 0;
+  }
+
+  main {
+    max-width: 1080px;
+    margin: 0 auto;
+  }
+
+  .catalog {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 32px;
+    margin-top: 48px;
+  }
+
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+
+  .card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 28px rgba(58, 49, 41, 0.12);
+  }
+
+  .card-image {
+    height: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3.2rem;
+    color: #fff;
+  }
+
+  .card-image.seramik { background: linear-gradient(135deg, #c9a58b, #a9805f); }
+  .card-image.mum { background: linear-gradient(135deg, #d9b26a, #b98b3f); }
+  .card-image.taki { background: linear-gradient(135deg, #b98a94, #93586a); }
+
+  .card-body {
+    padding: 22px 24px 26px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+
+  .category-label {
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .card-title {
+    font-size: 1.3rem;
+    margin-bottom: 10px;
+    color: var(--text-main);
+  }
+
+  .card-desc {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    flex: 1;
+    margin-bottom: 18px;
+  }
+
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid var(--border);
+    padding-top: 16px;
+  }
+
+  .price {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--accent-dark);
+  }
+
+  .price .unit {
+    font-size: 0.78rem;
+    font-weight: 400;
+    color: var(--text-muted);
+  }
+
+  .btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 10px 18px;
+    font-size: 0.85rem;
+    border-radius: 3px;
+    cursor: pointer;
+    font-family: inherit;
+    letter-spacing: 0.03em;
+    transition: background 0.2s ease;
+  }
+
+  .btn:hover {
+    background: var(--accent-dark);
+  }
+
+  .note {
+    display: inline-block;
+    margin-top: 14px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+  }
+
+  footer {
+    text-align: center;
+    margin-top: 64px;
+    padding-top: 28px;
+    border-top: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 0.85rem;
+  }
+
+  .social-links {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 18px;
+  }
+
+  .social-links a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    color: var(--accent-dark);
+    transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+  }
+
+  .social-links a:hover {
+    background: var(--accent);
+    color: #fff;
+    transform: translateY(-2px);
+  }
+
+  .social-links svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">AtölyeKart</div>
+  <p class="tagline">Seri üretim değil, elden ele geçen emek.</p>
+  <div class="divider"></div>
+</header>
+
+<main>
+  <div class="catalog">
+
+    <article class="card">
+      <div class="card-image seramik">🏺</div>
+      <div class="card-body">
+        <span class="category-label">Seramik</span>
+        <h2 class="card-title">Toprak Ton Kupa</h2>
+        <p class="card-desc">
+          El çarkında şekillendirilmiş, fırında iki kez pişirilmiş kupa. Her parça
+          birbirinden hafifçe farklı desen ve dokuya sahip — tamamen aynısı yok.
+          Günlük kahve ve çay keyfiniz için.
+        </p>
+        <div class="card-footer">
+          <span class="price">₺320<span class="unit"> / adet</span></span>
+          <button class="btn">Sepete Ekle</button>
+        </div>
+        <span class="note">El yapımı · Sınırlı sayıda üretim</span>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="card-image mum">🕯️</div>
+      <div class="card-body">
+        <span class="category-label">Mum</span>
+        <h2 class="card-title">Sandal Ağacı Soya Mumu</h2>
+        <p class="card-desc">
+          %100 doğal soya balmumundan, elle dökülerek hazırlanmış kokulu mum.
+          Cam kavanozu yeniden kullanılabilir. Ortalama 40 saat yanma süresi.
+        </p>
+        <div class="card-footer">
+          <span class="price">₺245<span class="unit"> / adet</span></span>
+          <button class="btn">Sepete Ekle</button>
+        </div>
+        <span class="note">Doğal içerik · Atölyede el dökümü</span>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="card-image taki">💍</div>
+      <div class="card-body">
+        <span class="category-label">Takı</span>
+        <h2 class="card-title">Ay Taşı Damla Küpe</h2>
+        <p class="card-desc">
+          Doğal ay taşı ve reçine detaylarla el işçiliğiyle bir araya getirilmiş
+          küpe. Hipoalerjenik çelik mekanizma ile hassas ciltlere de uygun.
+        </p>
+        <div class="card-footer">
+          <span class="price">₺410<span class="unit"> / çift</span></span>
+          <button class="btn">Sepete Ekle</button>
+        </div>
+        <span class="note">Doğal taş · Tek parça tasarım</span>
+      </div>
+    </article>
+
+  </div>
+</main>
+
+<footer>
+  <div class="social-links">
+    <a href="https://www.instagram.com/okanikov/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+      <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zM12 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+    </a>
+  </div>
+  &copy; 2026 AtölyeKart — Elde şekillenen, atölyede doğan ürünler.
+</footer>
+
+</body>
+</html>
