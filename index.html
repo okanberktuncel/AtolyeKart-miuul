@@ -781,6 +781,7 @@
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [submitted, setSubmitted] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
       document.body.style.overflow = 'hidden';
@@ -794,10 +795,15 @@
       };
     }, []);
 
-    function handleSubmit(e) {
+    async function handleSubmit(e) {
       e.preventDefault();
-      sendWebhook('appointment.request', { name, email });
-      setSubmitted(true);
+      setIsSubmitting(true);
+      try {
+        await sendWebhook('appointment.request', { name, email });
+        setSubmitted(true);
+      } finally {
+        setIsSubmitting(false);
+      }
     }
 
     return (
@@ -839,8 +845,8 @@
                     onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
-                <button type="submit" className="btn" style={{ width: '100%' }}>
-                  Randevu Talebi Gönder
+                <button type="submit" className="btn" style={{ width: '100%' }} disabled={isSubmitting}>
+                  {isSubmitting ? 'Gönderiliyor...' : 'Randevu Talebi Gönder'}
                 </button>
               </form>
             </React.Fragment>
