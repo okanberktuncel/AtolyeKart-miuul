@@ -297,6 +297,54 @@
     padding: 40px 20px;
   }
 
+  /* Gizlilik Politikası */
+  .policy-page h2 {
+    margin: 28px 0 8px;
+    font-size: 1.05rem;
+    color: var(--accent-dark);
+  }
+
+  .policy-page p, .policy-page li {
+    margin-bottom: 8px;
+  }
+
+  .policy-page ul {
+    padding-left: 20px;
+  }
+
+  .policy-updated {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-bottom: 16px;
+  }
+
+  .policy-disclaimer {
+    margin-top: 32px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .link-inline {
+    color: var(--accent);
+  }
+
+  .link-inline:hover {
+    color: var(--accent-dark);
+  }
+
+  .modal-privacy-note {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-align: center;
+    margin-top: 10px;
+  }
+
+  .footer-links {
+    margin-bottom: 10px;
+  }
+
   .cart-item {
     display: flex;
     align-items: center;
@@ -598,10 +646,10 @@
 
 <div id="root"></div>
 
-<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" integrity="sha384-DGyLxAyjq0f9SPpVevD6IgztCFlnMF6oW/XQGmfe+IsZ8TqEiDrcHkMLKI6fiB/Z" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" integrity="sha384-gTGxhz21lVGYNMcdJOyq01Edg0jhn/c22nsx0kyqP0TxaV5WVdsSH1fSDUf5YJj1" crossorigin="anonymous"></script>
 <script src="src/vendor/qrcode-react.umd.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@8.0.4/babel.min.js" integrity="sha384-bdF7m0Y1IFKt9Q6xC8X9qkXn0OBriQWKyWwZKYsN05zF6P/g9OakjjL0G2Sd4pB4" crossorigin="anonymous"></script>
 
 <script type="text/babel" data-type="module">
   const { useState, useEffect } = React;
@@ -716,6 +764,10 @@
 
   const WEBHOOK_URL = ''; // TODO: n8n webhook adresi hazır olduğunda buraya yapıştır
 
+  function stripHtml(value) {
+    return value.replace(/<[^>]*>/g, '').trim();
+  }
+
   function sendWebhook(event, payload) {
     if (!WEBHOOK_URL) {
       console.info(`[sendWebhook] WEBHOOK_URL henüz ayarlanmadı, "${event}" gönderilmedi.`, payload);
@@ -734,7 +786,7 @@
       const category = CATEGORIES.some((c) => c.id === parts[1]) ? parts[1] : 'tumu';
       return { page: 'urunler', category };
     }
-    if (parts[0] === 'profil' || parts[0] === 'sepet') {
+    if (parts[0] === 'profil' || parts[0] === 'sepet' || parts[0] === 'gizlilik') {
       return { page: parts[0], category: 'tumu' };
     }
     return { page: 'anasayfa', category: 'tumu' };
@@ -799,7 +851,10 @@
       e.preventDefault();
       setIsSubmitting(true);
       try {
-        await sendWebhook('appointment.request', { name, email });
+        await sendWebhook('appointment.request', {
+          name: stripHtml(name),
+          email: stripHtml(email),
+        });
         setSubmitted(true);
       } finally {
         setIsSubmitting(false);
@@ -849,6 +904,13 @@
                   {isSubmitting ? 'Gönderiliyor...' : 'Randevu Talebi Gönder'}
                 </button>
               </form>
+              <p className="modal-privacy-note">
+                Gönder'e tıklayarak paylaştığınız verilerin{' '}
+                <a className="link-inline" href="#/gizlilik" target="_blank" rel="noopener noreferrer">
+                  Gizlilik Politikası
+                </a>{' '}
+                kapsamında işlenmesini kabul edersiniz.
+              </p>
             </React.Fragment>
           )}
         </div>
@@ -994,6 +1056,116 @@
     );
   }
 
+  function GizlilikPolitikasi() {
+    return (
+      <div className="profile-page policy-page">
+        <h1 className="page-title" style={{ margin: '0 0 24px', padding: 0 }}>Gizlilik Politikası</h1>
+        <p className="policy-updated">Son güncelleme: 14 Ağustos 2026</p>
+
+        <section>
+          <h2>1. Veri Sorumlusu</h2>
+          <p>
+            Bu web sitesi üzerinden paylaştığınız kişisel veriler, 6698 sayılı Kişisel Verilerin Korunması Kanunu
+            ("KVKK") uyarınca veri sorumlusu sıfatıyla <strong>AtölyeKart</strong> [ticari unvan / açık adres /
+            MERSİS numarası eklenecek] tarafından işlenir.
+          </p>
+        </section>
+
+        <section>
+          <h2>2. Toplanan Kişisel Veriler</h2>
+          <p>"Müşteri Temsilcisi ile Randevu Talep Et" formunu doldurduğunuzda yalnızca şu veriler toplanır:</p>
+          <ul>
+            <li>Ad Soyad</li>
+            <li>E-posta adresi</li>
+          </ul>
+          <p>
+            Sepete veya favorilere ürün eklemeniz ayrıca sistemsel olarak kaydedilir; bu kayıtlar kimliğinizi
+            içermez.
+          </p>
+        </section>
+
+        <section>
+          <h2>3. İşlenme Amacı</h2>
+          <p>
+            Paylaştığınız veriler yalnızca randevu talebinizi değerlendirmek ve sizinle iletişime geçmek amacıyla
+            işlenir; pazarlama veya üçüncü taraflara satış amacıyla kullanılmaz.
+          </p>
+        </section>
+
+        <section>
+          <h2>4. Hukuki Sebep</h2>
+          <p>
+            Verileriniz, KVKK m.5/2 kapsamında sözleşme öncesi görüşme sürecinin yürütülmesi ve tarafımızın meşru
+            menfaati doğrultusunda, formu göndererek verdiğiniz açık rızaya dayanılarak işlenir.
+          </p>
+        </section>
+
+        <section>
+          <h2>5. Saklama Süresi</h2>
+          <p>
+            Randevu talebinize ilişkin veriler, talebin sonuçlandırılmasından itibaren en fazla <strong>2 yıl</strong>{' '}
+            içinde silinir, yok edilir veya anonim hale getirilir. Mevzuattan doğan zorunlu saklama süreleri bu
+            kuralın istisnasıdır.
+          </p>
+        </section>
+
+        <section>
+          <h2>6. Üçüncü Taraflar ve Veri Aktarımı</h2>
+          <p>Hizmetin sunulabilmesi için verileriniz sınırlı ölçüde aşağıdaki sağlayıcılarla paylaşılır:</p>
+          <ul>
+            <li>
+              <strong>Vercel Inc.</strong> — web sitesinin barındırıldığı (hosting) altyapı sağlayıcısı. Sunucular
+              yurt dışında olabileceğinden veriler KVKK m.9 uyarınca yurt dışına aktarılabilir.
+            </li>
+            <li>
+              <strong>n8n</strong> — randevu talebinizin ilgili ekibe iletilmesini sağlayan otomasyon/webhook
+              aracı.
+            </li>
+          </ul>
+          <p>Verileriniz bu sağlayıcılar dışında üçüncü taraflarla paylaşılmaz veya satılmaz.</p>
+        </section>
+
+        <section>
+          <h2>7. Haklarınız (KVKK m.11)</h2>
+          <p>Bize başvurarak aşağıdaki haklara sahipsiniz:</p>
+          <ul>
+            <li>Kişisel verilerinizin işlenip işlenmediğini öğrenme,</li>
+            <li>İşlenmişse buna ilişkin bilgi talep etme,</li>
+            <li>İşlenme amacına uygun kullanılıp kullanılmadığını öğrenme,</li>
+            <li>Yurt içinde/dışında aktarıldığı üçüncü kişileri bilme,</li>
+            <li>Eksik veya yanlış işlenmişse düzeltilmesini isteme,</li>
+            <li>KVKK'da öngörülen şartlarda silinmesini veya yok edilmesini isteme,</li>
+            <li>Otomatik sistemlerle analiz sonucu aleyhinize çıkan bir sonuca itiraz etme,</li>
+            <li>Kanuna aykırı işleme nedeniyle uğradığınız zararın giderilmesini talep etme.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>8. Silme Talebi ve Başvuru Yöntemi</h2>
+          <p>
+            Verilerinizin silinmesi dahil yukarıdaki haklarınızı kullanmak için{' '}
+            <a className="link-inline" href="mailto:gizlilik@atolyekart.com">gizlilik@atolyekart.com</a> adresine
+            talebinizi iletebilirsiniz. Başvurunuz KVKK m.13 uyarınca en geç <strong>30 gün</strong> içinde
+            yanıtlanır.
+          </p>
+        </section>
+
+        <section>
+          <h2>9. Değişiklikler</h2>
+          <p>
+            Bu politika, yasal düzenlemeler veya veri işleme süreçlerimizdeki değişikliklere göre güncellenebilir.
+            Güncel sürüm her zaman bu sayfada yayınlanır.
+          </p>
+        </section>
+
+        <p className="policy-disclaimer">
+          Not: Bu metin genel bir çerçeve sunar; işletmenizin gerçek veri işleme süreçlerine uyarlanması ve bir
+          hukuk danışmanına onaylatılması önerilir.
+        </p>
+      </div>
+    );
+  }
+
   function CartItemRow({ item, product, onUpdateQty, onRemove }) {
     return (
       <div className="cart-item">
@@ -1064,6 +1236,9 @@
             <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zM12 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
           </a>
         </div>
+        <p className="footer-links">
+          <a className="link-inline" href="#/gizlilik">Gizlilik Politikası</a>
+        </p>
         &copy; 2026 AtölyeKart — Elde şekillenen, atölyede doğan ürünler.
       </footer>
     );
@@ -1137,6 +1312,8 @@
       );
     } else if (page === 'profil') {
       content = <Profil />;
+    } else if (page === 'gizlilik') {
+      content = <GizlilikPolitikasi />;
     } else {
       content = <Sepet cart={cart} onUpdateQty={updateQty} onRemove={removeFromCart} />;
     }
