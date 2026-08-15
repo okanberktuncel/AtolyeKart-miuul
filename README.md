@@ -24,7 +24,6 @@ Ev dekorasyonu ve kişisel aksesuar odaklı **el yapımı (handmade) ürünler**
 
 - `index.html`: build adımı olmayan tek dosyalık React uygulaması (React 18 UMD + Babel Standalone, CDN üzerinden).
 - `src/data/card.js`: ürün/demo verisinin tutulduğu tek kaynak.
-- `katalog.html`: statik katalog sayfası.
 - `mobile/`: Expo (React Native) uygulaması — web sitesiyle içerik paraleli, ayrı bir proje (bkz. `mobile/README.md`).
 
 Detaylı geliştirme kuralları için `.claude/skills/atolyekart-conventions/SKILL.md` dosyasına bakın.
