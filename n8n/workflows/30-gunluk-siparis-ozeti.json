@@ -1,0 +1,250 @@
+{
+  "id": "atkGunlukOzet001",
+  "name": "30 · Günlük sipariş özeti",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "8e7db0c2-176d-4eda-a7f8-8be3f122c412",
+      "name": "Her gün 21:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        -80
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 21
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "51302698-e647-4a5c-a943-92817ebdb0d6",
+      "name": "Elle çalıştır",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        100
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "e89cc65f-4b88-419c-ae36-8ffdcafc494e",
+      "name": "Siparişleri oku",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.ATOLYEKART_SHEET_ID }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "siparisler"
+        },
+        "filtersUI": {},
+        "combineFilters": "AND",
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "atkGoogleSheets1",
+          "name": "Google Sheets (AtölyeKart)"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "c7e16a23-5ea2-406a-aff0-f8e0b11295a0",
+      "name": "Bugünü ürüne göre grupla",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "jsCode": "// Bugünün (Europe/Istanbul) siparişlerini ürün bazında gruplar: sipariş sayısı + toplam adet.\nconst today = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Istanbul' }); // YYYY-MM-DD\nconst groups = {};\n\nfor (const { json: row } of $input.all()) {\n  if (!row.timestamp) continue;\n  const day = new Date(row.timestamp).toLocaleDateString('sv-SE', { timeZone: 'Europe/Istanbul' });\n  if (day !== today) continue;\n  const g = (groups[row.productId] ??= { tarih: today, productId: row.productId, productName: row.productName, siparisSayisi: 0, toplamAdet: 0 });\n  g.siparisSayisi += 1;\n  g.toplamAdet += Number(row.quantity) || 0;\n}\n\nreturn Object.values(groups)\n  .sort((a, b) => b.toplamAdet - a.toplamAdet)\n  .map((g) => ({ json: g }));"
+      }
+    },
+    {
+      "id": "c459fd1c-b87e-4635-acd6-4a3d34b35e00",
+      "name": "Ürün ürün dolaş",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      }
+    },
+    {
+      "id": "2ae985c4-5a6c-4521-a6e2-614f46831507",
+      "name": "Özet sekmesine yaz",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        880,
+        80
+      ],
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.ATOLYEKART_SHEET_ID }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "gunluk_ozet"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "atkGoogleSheets1",
+          "name": "Google Sheets (AtölyeKart)"
+        }
+      }
+    },
+    {
+      "id": "0064bfe9-3d90-4dd0-af63-45af3ba4fedb",
+      "name": "Bitti",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        880,
+        -120
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "520f2834-85ca-402e-ac29-1404a6cdfde3",
+      "name": "Not",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -380
+      ],
+      "parameters": {
+        "content": "## Günlük sipariş özeti (Hafta 4 · Code + Loop)\nHer akşam `siparisler` sekmesini okur, **Code** node'u bugünün siparişlerini ürüne göre gruplar, **Loop Over Items** her ürün için `gunluk_ozet` sekmesine bir satır yazar.\n\nTest için **Elle çalıştır** ile tetikle.",
+        "width": 560,
+        "height": 260,
+        "color": 7
+      }
+    }
+  ],
+  "connections": {
+    "Her gün 21:00": {
+      "main": [
+        [
+          {
+            "node": "Siparişleri oku",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Elle çalıştır": {
+      "main": [
+        [
+          {
+            "node": "Siparişleri oku",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Siparişleri oku": {
+      "main": [
+        [
+          {
+            "node": "Bugünü ürüne göre grupla",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Bugünü ürüne göre grupla": {
+      "main": [
+        [
+          {
+            "node": "Ürün ürün dolaş",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ürün ürün dolaş": {
+      "main": [
+        [
+          {
+            "node": "Bitti",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Özet sekmesine yaz",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Özet sekmesine yaz": {
+      "main": [
+        [
+          {
+            "node": "Ürün ürün dolaş",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Istanbul",
+    "errorWorkflow": "atkHataYakala001"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

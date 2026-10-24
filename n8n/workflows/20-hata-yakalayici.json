@@ -1,0 +1,119 @@
+{
+  "id": "atkHataYakala001",
+  "name": "20 · Hata yakalayıcı",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "4db247c7-371e-4e77-afb7-6f8d1678ed30",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "d7e46ee6-aa0d-4027-a92d-2c0e874edd9e",
+      "name": "Hata kaydı",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "jsCode": "// Error Trigger'ın verisini tek satırlık bir log kaydına çevirir.\nconst e = $input.first().json;\nreturn [{\n  json: {\n    timestamp: new Date().toISOString(),\n    workflow: e.workflow?.name ?? '',\n    node: e.execution?.lastNodeExecuted ?? '',\n    message: e.execution?.error?.message ?? e.trigger?.error?.message ?? 'bilinmeyen hata',\n    executionId: e.execution?.id ?? '',\n    executionUrl: e.execution?.url ?? '',\n  },\n}];"
+      }
+    },
+    {
+      "id": "7f1a7d6b-4660-443a-a076-d255fd5ff018",
+      "name": "Hatalar sekmesine yaz",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.ATOLYEKART_SHEET_ID }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "hatalar"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "atkGoogleSheets1",
+          "name": "Google Sheets (AtölyeKart)"
+        }
+      }
+    },
+    {
+      "id": "6e972a5d-31e2-4e85-a04a-911992dcbbeb",
+      "name": "Not",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -280
+      ],
+      "parameters": {
+        "content": "## Hata yakalayıcı (Hafta 4 · Error Handling)\nDiğer akışların ayarlarında **Error Workflow** olarak seçili.\nHer hata Sheet'teki `hatalar` sekmesine bir satır olarak düşer.\n\nSlack/Discord istersen Sheets node'unun yanına bir mesaj node'u ekleyebilirsin.",
+        "width": 520,
+        "height": 240,
+        "color": 7
+      }
+    }
+  ],
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Hata kaydı",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hata kaydı": {
+      "main": [
+        [
+          {
+            "node": "Hatalar sekmesine yaz",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Istanbul"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

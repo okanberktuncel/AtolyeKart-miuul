@@ -1,0 +1,452 @@
+{
+  "id": "atkSiparisVer001",
+  "name": "01 · Sipariş Ver",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "8d56c6db-6a37-4c02-a7b6-2062c2ae1894",
+      "name": "Sipariş webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "atolyekart/siparis",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "webhookId": "09499a36-67b3-4310-a212-511d1ab7f344"
+    },
+    {
+      "id": "02a16266-66de-4522-a6b0-e67bd63e2e71",
+      "name": "Secret doğru mu?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7e147632-04e1-45b3-ad1c-3172c3f21701",
+              "leftValue": "={{ $json.headers['x-atolyekart-secret'] }}",
+              "rightValue": "={{ $env.WEBHOOK_SECRET }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "e0d696cc-48aa-4a34-a733-f152b181d1c0",
+      "name": "401 Yetkisiz",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        440,
+        180
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"error\": \"unauthorized\" } }}",
+        "options": {
+          "responseCode": 401
+        }
+      }
+    },
+    {
+      "id": "8f50026c-f78f-404b-a536-ec9e3c0f592c",
+      "name": "Gövdeyi al",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        -60
+      ],
+      "parameters": {
+        "jsCode": "// Vercel API'nin gönderdiği payload webhook'ta body içinde gelir.\nreturn [{ json: $input.first().json.body }];"
+      }
+    },
+    {
+      "id": "5dd4b193-364d-475c-a88c-b19869d07714",
+      "name": "Ortak doğrulama",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        660,
+        -60
+      ],
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "atkDogrulama0001",
+          "cachedResultName": "10 · Ortak doğrulama (alt akış)"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "6231f0ee-cef8-490a-af75-51ad1d4e1d43",
+      "name": "400 Geçersiz",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        880,
+        120
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"error\": String($json.error?.message ?? $json.error ?? \"validation failed\") } }}",
+        "options": {
+          "responseCode": 400
+        }
+      }
+    },
+    {
+      "id": "cbfdc6e8-ef33-484a-a29d-2605468da4db",
+      "name": "Siparişler sekmesine yaz",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        880,
+        -160
+      ],
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.ATOLYEKART_SHEET_ID }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "siparisler"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "atkGoogleSheets1",
+          "name": "Google Sheets (AtölyeKart)"
+        }
+      }
+    },
+    {
+      "id": "04a4ad00-6074-48da-a860-303a3afe8623",
+      "name": "200 Alındı",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1100,
+        -160
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"ok\": true } }}",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    },
+    {
+      "id": "1daccd8a-b07a-4834-ad38-33c727197aff",
+      "name": "AI teşekkür maili",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        1320,
+        -160
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Bir el yapımı ürün atölyesi olan AtölyeKart adına müşteriye kısa ve samimi bir teşekkür e-postası yaz.\n\nMüşteri adı: {{ $('Ortak doğrulama').item.json.name }}\nÜrün: {{ $('Ortak doğrulama').item.json.productName }} (kategori: {{ $('Ortak doğrulama').item.json.productCategory }})\nAdet: {{ $('Ortak doğrulama').item.json.quantity }}\n\nTahmini hazırlanma süresi kuralları (iş günü):\n- seramik: 7 gün (şekillendirme, kuruma ve iki kez fırınlama)\n- mum: 3 gün (dökme ve kürlenme)\n- taki: 4 gün (el ile montaj)\nAdet 3'ten fazlaysa süreye 2 gün ekle.\n\nKurallar:\n- Türkçe yaz, \"siz\" diye hitap et, en fazla 120 kelime.\n- Ürünün elde, küçük partilerle üretildiğini ve her parçanın birbirinden farklı olduğunu vurgula.\n- Fiyat veya indirim uydurma.",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "type": "SystemMessagePromptTemplate",
+              "message": "Sen AtölyeKart'ın sıcak ve samimi müşteri iletişimi asistanısın. Sadece istenen JSON alanlarını üretirsin."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "9d267ff9-70c2-44dd-a0b3-0b30b08b2028",
+      "name": "Ollama Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        1300,
+        60
+      ],
+      "parameters": {
+        "model": "qwen2.5:7b",
+        "options": {
+          "temperature": 0.4
+        }
+      },
+      "credentials": {
+        "ollamaApi": {
+          "id": "atkOllama0000001",
+          "name": "Ollama (local)"
+        }
+      }
+    },
+    {
+      "id": "dfa994a7-5be5-4831-ad03-681907679338",
+      "name": "Mail JSON şeması",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1460,
+        60
+      ],
+      "parameters": {
+        "schemaType": "fromJson",
+        "jsonSchemaExample": "{\n  \"subject\": \"Siparişiniz için teşekkürler, Ayşe Hanım!\",\n  \"body\": \"Merhaba Ayşe Hanım, ...\",\n  \"estimatedPrepDays\": 7\n}"
+      }
+    },
+    {
+      "id": "5c8d254e-4389-4d88-a465-95eb543cbd32",
+      "name": "Mail taslağı",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1660,
+        -160
+      ],
+      "parameters": {
+        "jsCode": "const order = $('Ortak doğrulama').first().json;\nconst mail = $input.first().json.output;\nreturn [{\n  json: {\n    timestamp: new Date().toISOString(),\n    email: order.email,\n    name: order.name,\n    productName: order.productName,\n    subject: mail.subject,\n    body: mail.body,\n    estimatedPrepDays: mail.estimatedPrepDays,\n  },\n}];"
+      }
+    },
+    {
+      "id": "90e06e5a-d22f-40f5-a4a4-5feafa67ac06",
+      "name": "AI mailler sekmesine yaz",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1880,
+        -160
+      ],
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.ATOLYEKART_SHEET_ID }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "ai_mailler"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "atkGoogleSheets1",
+          "name": "Google Sheets (AtölyeKart)"
+        }
+      }
+    },
+    {
+      "id": "72187ccc-4ced-4e77-a803-ab5a496086c9",
+      "name": "Not",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -420
+      ],
+      "parameters": {
+        "content": "## Sipariş Ver (Hafta 3 + 4)\n1. Vercel API → webhook (`X-Atolyekart-Secret` kontrolü)\n2. Ortak doğrulama alt akışı (hata → 400 + Error Workflow)\n3. `siparisler` sekmesine satır\n4. API'ye hemen 200 döner (Vercel 10 sn bekler, LLM daha uzun sürebilir)\n5. Ollama ile kişiselleştirilmiş teşekkür maili + tahmini hazırlanma süresi → `ai_mailler` sekmesi",
+        "width": 640,
+        "height": 300,
+        "color": 7
+      }
+    }
+  ],
+  "connections": {
+    "Sipariş webhook": {
+      "main": [
+        [
+          {
+            "node": "Secret doğru mu?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Secret doğru mu?": {
+      "main": [
+        [
+          {
+            "node": "Gövdeyi al",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "401 Yetkisiz",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gövdeyi al": {
+      "main": [
+        [
+          {
+            "node": "Ortak doğrulama",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ortak doğrulama": {
+      "main": [
+        [
+          {
+            "node": "Siparişler sekmesine yaz",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "400 Geçersiz",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Siparişler sekmesine yaz": {
+      "main": [
+        [
+          {
+            "node": "200 Alındı",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "200 Alındı": {
+      "main": [
+        [
+          {
+            "node": "AI teşekkür maili",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI teşekkür maili",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mail JSON şeması": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI teşekkür maili",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI teşekkür maili": {
+      "main": [
+        [
+          {
+            "node": "Mail taslağı",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mail taslağı": {
+      "main": [
+        [
+          {
+            "node": "AI mailler sekmesine yaz",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Istanbul",
+    "errorWorkflow": "atkHataYakala001"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}
