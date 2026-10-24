@@ -1,0 +1,8 @@
+# Secret'lar: asla commit'lenmez. Örnek değerler için .env.example'a bakın.
+.env
+.env.*
+!.env.example
+
+node_modules/
+.vercel/
+.DS_Store
