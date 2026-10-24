@@ -1,96 +1,91 @@
 ---
 name: atolyekart-conventions
-description: Use when adding or editing a component in AtölyeKart's index.html, adding demo/mock product data, or constructing a cart-save / favorite-save webhook payload — defines the single-file component rule, the demo data location, and the exact JSON contract for those two events.
+description: Use when adding or editing a component in AtölyeKart's index.html or Expo app, adding or changing product data, touching the order / stock-notify forms or API routes, or building an n8n workflow that consumes their webhook payloads — defines the single-file component rule, the shared data file, and the exact JSON contract for the two events.
 ---
 
 # AtölyeKart Conventions
 
 ## Overview
 
-AtölyeKart's `index.html` is a single no-build file: React 18 UMD + Babel Standalone loaded via CDN, all components defined inline. This skill fixes two things that are easy to get wrong when extending it: where component code and demo data live, and the exact JSON shape webhook payloads must have.
+AtölyeKart has three parts that must stay in sync:
 
-## Component Rule
+- `index.html`: a single no-build React 18 UMD + Babel Standalone page, all components inline.
+- `mobile/`: an Expo app with the same products and forms.
+- `api/`: Vercel serverless functions that validate the forms and forward them to n8n.
+
+This skill fixes the four things that are easy to get wrong: where component code lives, where product data lives, how forms are sent, and the exact webhook payload shape.
+
+## Component Rule (web)
 
 - Every component is a **function component** defined inside `index.html`'s `<script type="text/babel">` block. No class components, no per-component files, no build step.
-- One function = one component. Don't split a single component's JSX across multiple `<script>` blocks.
-- Demo/mock data does NOT live inline in a component. It lives in `src/data/card.js` (the project's single data file — covers all product/demo data, not just literal "card" UI elements), loaded via a plain `<script src="src/data/card.js"></script>` tag placed BEFORE the Babel script, so it's available as a global before `App` renders.
-- `id` for a data entry is `{category}-{kebab-case-short-slug-of-title}`, e.g. title "Lavanta Mumu" in category `mum` → `mum-lavanta`. Keep it short (1-2 words from the title), not the full slugified title.
-- `image` is a real, working image URL (verify with `curl -I` before adding) — never a placeholder string like `'...'` or a local path that doesn't exist.
+- One function = one component. Shared form logic lives in small helpers (`Modal`, `ConsentCheckbox`, `useFormSubmit`, `SuccessView`) in the same block.
 
-`src/data/card.js` (classic script, not ES module — Babel Standalone doesn't resolve imports):
-```js
-// src/data/card.js
-window.CARD_DATA = {
-  products: [
-    { id: 'seramik-kupa', category: 'seramik', title: 'Toprak Ton Kupa', price: 320, unit: 'adet', image: 'https://images.unsplash.com/photo-...' },
-  ],
-};
-```
+## Product Data
 
-In `index.html`:
-```html
-<script src="src/data/card.js"></script>
-<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-<script type="text/babel">
-  const PRODUCTS = window.CARD_DATA.products;
-  function ProductCard({ product }) { /* ... */ }
-</script>
-```
+- The single source is `src/data/products.json`: `{ "categories": [...], "products": [...] }`.
+- The web page `fetch`es it before the first render. Mobile imports it through `mobile/data/products.ts`, and `mobile/metro.config.js` adds the repo root to `watchFolders`. The API `require`s it for server-side `productId` checks, and n8n reads it over HTTP from the deployed site.
+- Never copy product arrays into a component, `mobile/`, or an n8n Code node.
+- Product fields: `id`, `category`, `title`, `description`, `price`, `unit`, `image`, `inStock`.
+- The `id` format is `{category}-{short-slug}` (for example `mum-lavanta`). Use 1-2 words from the title.
+- `image` must be a real, verified URL (check it with `curl -I`), never a placeholder.
+- `inStock: false` swaps "Sipariş Ver" for "Stok Bildirimi İste". The API rejects orders for products that are out of stock, and rejects stock requests for products that are in stock.
 
-## Webhook Data Contract
+## Sending Forms
 
-Two events, one envelope shape: `{ event, timestamp, ...payload }`.
-- `timestamp` is generated at call time: `new Date().toISOString()` (ISO 8601 UTC).
-- Field names on any product always match `src/data/card.js`: `id`, `category`, `title`, `price`, `unit` (+ `qty` only inside cart items). Never rename or add ad-hoc fields per event.
-- Send with a plain `fetch(WEBHOOK_URL, { method: 'POST', body: JSON.stringify(payload) })` from a single shared `sendWebhook(event, payload)` helper — don't inline fetch calls in multiple components.
+- Clients (web and mobile) never call n8n or any webhook directly. They `POST` JSON to `/api/order` or `/api/stock-notify`, through `postForm` on web or `mobile/lib/formApi.ts` on mobile.
+- The client sends: the form fields, `productId`, `consent: true`, and `source` (`'web'` or `'mobile'`).
+- The API owns validation, the rate limit (`RATE_LIMIT_PER_MINUTE`, default 10 per IP), the webhook URLs (`N8N_ORDER_WEBHOOK_URL`, `N8N_STOCK_WEBHOOK_URL`) and the `X-Atolyekart-Secret` header (`WEBHOOK_SECRET`). None of these ever reach the browser.
+- Responses: `200 { ok, forwarded }` · `400 { error, errors: { field: message } }` · `405` · `429` (with `Retry-After`) · `502` when n8n fails.
 
-### `cart.save`
-Sent when the cart is persisted (e.g. on checkout or explicit "save").
+## Webhook Data Contract (API → n8n)
+
+The API adds `timestamp` (ISO 8601 UTC, `new Date().toISOString()`) to the validated payload. Field names are fixed by the course brief. Never rename them or add fields to them.
+
+### `order.create`
 ```json
 {
-  "event": "cart.save",
-  "timestamp": "2026-08-12T10:00:00Z",
-  "cart": {
-    "items": [
-      { "id": "seramik-kupa", "title": "Toprak Ton Kupa", "category": "seramik", "price": 320, "unit": "adet", "qty": 2 }
-    ],
-    "totalItemCount": 2,
-    "totalPrice": 640
-  }
+  "event": "order.create",
+  "name": "Ayşe Yılmaz",
+  "productId": "seramik-kupa",
+  "productName": "Toprak Ton Kupa",
+  "phone": "05321234567",
+  "email": "ayse@example.com",
+  "quantity": 2,
+  "source": "web",
+  "timestamp": "2026-10-24T10:00:00.000Z"
 }
 ```
 
-### `favorite.save`
-Sent when a single product is added to favorites.
+### `stock.notify`
 ```json
 {
-  "event": "favorite.save",
-  "timestamp": "2026-08-12T10:00:00Z",
-  "product": { "id": "taki-kolye", "title": "Boncuk Detaylı Kolye", "category": "taki", "price": 350, "unit": "adet" }
+  "event": "stock.notify",
+  "name": "Ayşe Yılmaz",
+  "productId": "mum-karanlik",
+  "productName": "Gece Kokusu Mumu",
+  "email": "ayse@example.com",
+  "source": "mobile",
+  "timestamp": "2026-10-24T10:00:00.000Z"
 }
 ```
 
-`favorite.remove` and `cart.update` mirror the same shape with a different `event` value — don't invent new field names for them.
+n8n must reject any request whose `X-Atolyekart-Secret` header does not match its own `WEBHOOK_SECRET`.
 
 ## Quick Reference
 
 | Rule | Detail |
 |---|---|
 | Component location | Inside `index.html`, function component only, one file total |
-| Demo/mock data | `src/data/card.js`, classic script loaded before the Babel script |
-| `id` format | `{category}-{short-slug}` |
-| `image` | Real, verified URL — never a placeholder |
-| Webhook envelope | `{ event, timestamp, ...payload }`, `timestamp` = `new Date().toISOString()` |
-| Webhook sending | Single shared `sendWebhook(event, payload)` helper, not inlined `fetch` calls |
-| Field names | `id`, `category`, `title`, `price`, `unit` (+ `qty` in cart items) |
+| Product data | `src/data/products.json` only |
+| Form submit | Client → `/api/order` or `/api/stock-notify`, never a webhook |
+| Secrets | `.env.local` (git-ignored) and Vercel env vars only |
+| Payload fields | Exactly the contract above + `timestamp` |
+| Tests | `npm test` (node:test, no dependencies) |
 
 ## Common Mistakes
 
-- Adding a new `<script src="components/X.js">` per component — breaks the single-file rule.
-- Inlining product/demo arrays directly in a component instead of `src/data/card.js`.
-- Using `productId` in a webhook payload instead of `id` — inconsistent with `src/data/card.js`.
-- Using ES `import`/`export` in `src/data/card.js` — Babel Standalone won't resolve module imports; use `window.CARD_DATA` instead.
+- Putting a webhook URL or secret in `index.html` or `mobile/`. They are visible to anyone.
+- Adding a field to the payload in only one place. Change `api/_lib/validation.js`, the tests and this contract together.
+- Editing `mobile/data/products.ts` to add a product. Edit `src/data/products.json` instead.
+- Opening `index.html` via `file://`. The data `fetch` fails, so run it with `npm run dev`.
 - Leaving `image` as a placeholder string instead of a verified real URL.
-- Calling `fetch` directly from inside a component instead of going through `sendWebhook`.

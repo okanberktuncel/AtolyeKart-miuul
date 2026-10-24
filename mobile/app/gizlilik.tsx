@@ -25,7 +25,7 @@ const SECTIONS: { title: string; body: string }[] = [
   },
   {
     title: '6. Üçüncü Taraflar ve Veri Aktarımı',
-    body: 'Hizmetin sunulabilmesi için verileriniz sınırlı ölçüde şu sağlayıcılarla paylaşılır: Vercel Inc. (hosting altyapısı; sunucular yurt dışında olabileceğinden veriler KVKK m.9 uyarınca yurt dışına aktarılabilir) ve n8n (sipariş ve stok bildirimi taleplerinizin atölye ekibine iletilmesini sağlayan otomasyon/webhook aracı). Verileriniz bu sağlayıcılar dışında üçüncü taraflarla paylaşılmaz veya satılmaz.',
+    body: 'Hizmetin sunulabilmesi için verileriniz sınırlı ölçüde şu sağlayıcılarla paylaşılır: Vercel Inc. (hosting altyapısı; sunucular yurt dışında olabileceğinden veriler KVKK m.9 uyarınca yurt dışına aktarılabilir) ve n8n (sipariş ve stok bildirimi taleplerinizin atölye ekibine iletilmesini sağlayan otomasyon/webhook aracı) ve Google LLC (sipariş ve stok bildirimi kayıtlarının tutulduğu Google Sheets; veriler yurt dışına aktarılabilir). Verileriniz bu sağlayıcılar dışında üçüncü taraflarla paylaşılmaz veya satılmaz.',
   },
   {
     title: '7. Haklarınız (KVKK m.11)',
