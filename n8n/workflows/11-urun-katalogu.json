@@ -1,0 +1,100 @@
+{
+  "id": "atkUrunKatalog01",
+  "name": "11 · Ürün kataloğu (alt akış)",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "04103321-9484-4918-a0d7-96ccb3e69e16",
+      "name": "Alt akış girişi",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "inputSource": "passthrough"
+      }
+    },
+    {
+      "id": "2a0f2374-01d6-4419-afe8-b2042986f837",
+      "name": "products.json oku",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "url": "={{ $env.ATOLYEKART_SITE_URL }}/src/data/products.json",
+        "options": {
+          "timeout": 10000
+        }
+      }
+    },
+    {
+      "id": "2fa529c6-dca5-4d3e-aa0a-688c8c90c0a9",
+      "name": "Kataloğu sadeleştir",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "jsCode": "// Web, mobil ve n8n aynı products.json'u kullanır; ajan için gereksiz alanları atıyoruz.\nconst catalog = $input.first().json.products.map((p) => ({\n  id: p.id,\n  ad: p.title,\n  kategori: p.category,\n  fiyat: p.price,\n  birim: p.unit,\n  inStock: p.inStock,\n}));\nreturn [{ json: { catalog } }];"
+      }
+    },
+    {
+      "id": "79529b87-a23a-46a0-af16-048e284bd114",
+      "name": "Not",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -260
+      ],
+      "parameters": {
+        "content": "## Ürün kataloğu (alt akış)\nSitedeki `src/data/products.json` dosyasını okur.\nKullananlar: stok bildirimi AI Agent'ı, chatbot ve MCP sunucusu.\n\n`ATOLYEKART_SITE_URL` env değişkeni Vercel adresi ya da `http://host.docker.internal:3000` olmalı.",
+        "width": 520,
+        "height": 220,
+        "color": 7
+      }
+    }
+  ],
+  "connections": {
+    "Alt akış girişi": {
+      "main": [
+        [
+          {
+            "node": "products.json oku",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "products.json oku": {
+      "main": [
+        [
+          {
+            "node": "Kataloğu sadeleştir",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Istanbul",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

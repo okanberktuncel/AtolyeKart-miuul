@@ -1,0 +1,460 @@
+{
+  "id": "atkStokBildir001",
+  "name": "02 · Stok Bildirimi İste",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "eaed4dee-707a-4556-a11a-8f2e4a933162",
+      "name": "Stok bildirimi webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "atolyekart/stok-bildirimi",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "webhookId": "e5ff6708-101b-40b1-a936-d9ca746540fd"
+    },
+    {
+      "id": "7bb846d6-b035-438f-a940-8fa69853c8b0",
+      "name": "Secret doğru mu?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "6d8d908d-647b-46d8-a4c8-39fbe491470b",
+              "leftValue": "={{ $json.headers['x-atolyekart-secret'] }}",
+              "rightValue": "={{ $env.WEBHOOK_SECRET }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "c5c3b584-ce14-4d37-aa55-e15a362d3cd2",
+      "name": "401 Yetkisiz",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        440,
+        180
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"error\": \"unauthorized\" } }}",
+        "options": {
+          "responseCode": 401
+        }
+      }
+    },
+    {
+      "id": "a8f25868-f798-4108-a18a-cf39812a9450",
+      "name": "Gövdeyi al",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        -60
+      ],
+      "parameters": {
+        "jsCode": "return [{ json: $input.first().json.body }];"
+      }
+    },
+    {
+      "id": "20b7950a-8256-406d-ab1e-e93c54a188a8",
+      "name": "Ortak doğrulama",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        660,
+        -60
+      ],
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "atkDogrulama0001",
+          "cachedResultName": "10 · Ortak doğrulama (alt akış)"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "2b996d16-b249-4e46-a99e-6f9e7711e725",
+      "name": "400 Geçersiz",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        880,
+        120
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"error\": String($json.error?.message ?? $json.error ?? \"validation failed\") } }}",
+        "options": {
+          "responseCode": 400
+        }
+      }
+    },
+    {
+      "id": "62ab6b6a-731d-4d5e-a350-661ef80f0f83",
+      "name": "Stok talepleri sekmesine yaz",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        880,
+        -160
+      ],
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.ATOLYEKART_SHEET_ID }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "stok_talepleri"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "atkGoogleSheets1",
+          "name": "Google Sheets (AtölyeKart)"
+        }
+      }
+    },
+    {
+      "id": "51b0a3ca-f717-4964-ad2b-7d792e18c4f5",
+      "name": "200 Alındı",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1100,
+        -160
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"ok\": true } }}",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    },
+    {
+      "id": "04b2924c-70ee-4876-ad29-cd9011fc3d2a",
+      "name": "AI alternatif öneri",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        1320,
+        -160
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Müşteri {{ $('Ortak doğrulama').item.json.name }}, şu an tükenmiş olan \"{{ $('Ortak doğrulama').item.json.productName }}\" (kategori: {{ $('Ortak doğrulama').item.json.productCategory }}) için stok bildirimi istedi.\n\nurun_katalogu aracıyla kataloğu kontrol et ve AYNI kategoride, inStock değeri true olan en fazla 2 alternatif ürün öner. Ardından müşteriye 80 kelimeyi geçmeyen, samimi bir Türkçe e-posta metni yaz: ürün yeniden üretildiğinde haber vereceğimizi söyle ve alternatifleri adı ve fiyatıyla an.",
+        "options": {
+          "systemMessage": "Sen AtölyeKart'ın ürün danışmanısın. Sadece urun_katalogu aracının döndürdüğü ürünleri önerirsin; katalogda olmayan ürün, fiyat veya indirim uydurmazsın.",
+          "maxIterations": 5
+        }
+      }
+    },
+    {
+      "id": "b5fa3364-aa73-4eb4-a2c0-2f79436ef3cd",
+      "name": "Ollama Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        1260,
+        60
+      ],
+      "parameters": {
+        "model": "qwen2.5:7b",
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "credentials": {
+        "ollamaApi": {
+          "id": "atkOllama0000001",
+          "name": "Ollama (local)"
+        }
+      }
+    },
+    {
+      "id": "39bff914-648a-4acb-a112-855230c59d00",
+      "name": "urun_katalogu",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        1440,
+        60
+      ],
+      "parameters": {
+        "description": "AtölyeKart ürün kataloğunu döndürür: her ürün için id, ad, kategori (seramik, mum, taki), fiyat (TL) ve stok durumu (inStock). Stokta olan ürünleri veya bir kategorideki alternatifleri bulmak için kullan.",
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "atkUrunKatalog01",
+          "cachedResultName": "11 · Ürün kataloğu (alt akış)"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      }
+    },
+    {
+      "id": "7e69f5ca-227c-4d2d-a401-5ee0a378b4df",
+      "name": "Öneri kaydı",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        -160
+      ],
+      "parameters": {
+        "jsCode": "const req = $('Ortak doğrulama').first().json;\nreturn [{\n  json: {\n    timestamp: new Date().toISOString(),\n    email: req.email,\n    name: req.name,\n    productId: req.productId,\n    productName: req.productName,\n    suggestion: $input.first().json.output,\n  },\n}];"
+      }
+    },
+    {
+      "id": "cf920a0c-a095-4f23-ac13-bd47a570b93d",
+      "name": "Alternatif öneriler sekmesine yaz",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1900,
+        -160
+      ],
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.ATOLYEKART_SHEET_ID }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "alternatif_oneriler"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "atkGoogleSheets1",
+          "name": "Google Sheets (AtölyeKart)"
+        }
+      }
+    },
+    {
+      "id": "9b66529f-2574-49aa-ab10-9c52985b1ff8",
+      "name": "Not",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -420
+      ],
+      "parameters": {
+        "content": "## Stok Bildirimi İste (Hafta 3 + 4)\n1. Secret kontrolü + ortak doğrulama alt akışı\n2. `stok_talepleri` sekmesine satır, API'ye hemen 200\n3. **AI Agent** (tool-calling): `urun_katalogu` aracıyla aynı kategoride stokta olan alternatifleri bulur ve müşteriye kısa bir e-posta metni yazar → `alternatif_oneriler` sekmesi",
+        "width": 640,
+        "height": 280,
+        "color": 7
+      }
+    }
+  ],
+  "connections": {
+    "Stok bildirimi webhook": {
+      "main": [
+        [
+          {
+            "node": "Secret doğru mu?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Secret doğru mu?": {
+      "main": [
+        [
+          {
+            "node": "Gövdeyi al",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "401 Yetkisiz",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gövdeyi al": {
+      "main": [
+        [
+          {
+            "node": "Ortak doğrulama",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ortak doğrulama": {
+      "main": [
+        [
+          {
+            "node": "Stok talepleri sekmesine yaz",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "400 Geçersiz",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stok talepleri sekmesine yaz": {
+      "main": [
+        [
+          {
+            "node": "200 Alındı",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "200 Alındı": {
+      "main": [
+        [
+          {
+            "node": "AI alternatif öneri",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI alternatif öneri",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "urun_katalogu": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI alternatif öneri",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI alternatif öneri": {
+      "main": [
+        [
+          {
+            "node": "Öneri kaydı",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Öneri kaydı": {
+      "main": [
+        [
+          {
+            "node": "Alternatif öneriler sekmesine yaz",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Istanbul",
+    "errorWorkflow": "atkHataYakala001"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

@@ -9,23 +9,23 @@ const SECTIONS: { title: string; body: string }[] = [
   },
   {
     title: '2. Toplanan Kişisel Veriler',
-    body: '"Müşteri Temsilcisi ile Randevu Talep Et" formunu doldurduğunuzda yalnızca Ad Soyad ve E-posta adresi toplanır. Sepete veya favorilere ürün eklemeniz ayrıca sistemsel olarak kaydedilir; bu kayıtlar kimliğinizi içermez.',
+    body: '"Sipariş Ver" ve "Stok Bildirimi İste" formlarını doldurduğunuzda yalnızca Ad Soyad, E-posta adresi, Telefon numarası (yalnızca sipariş formunda) ve seçtiğiniz ürün ile adet toplanır. Sepete veya favorilere ürün eklemeniz ayrıca sistemsel olarak kaydedilir; bu kayıtlar kimliğinizi içermez.',
   },
   {
     title: '3. İşlenme Amacı',
-    body: 'Paylaştığınız veriler yalnızca randevu talebinizi değerlendirmek ve sizinle iletişime geçmek amacıyla işlenir; pazarlama veya üçüncü taraflara satış amacıyla kullanılmaz.',
+    body: 'Paylaştığınız veriler yalnızca siparişinizi hazırlamak, sizinle sipariş hakkında iletişime geçmek ve talep ettiğiniz ürün yeniden stoğa girdiğinde size haber vermek amacıyla işlenir; pazarlama veya üçüncü taraflara satış amacıyla kullanılmaz.',
   },
   {
     title: '4. Hukuki Sebep',
-    body: 'Verileriniz, KVKK m.5/2 kapsamında sözleşme öncesi görüşme sürecinin yürütülmesi ve tarafımızın meşru menfaati doğrultusunda, formu göndererek verdiğiniz açık rızaya dayanılarak işlenir.',
+    body: 'Verileriniz, KVKK m.5/2 kapsamında sözleşmenin kurulması ve ifası ile tarafımızın meşru menfaati doğrultusunda, formdaki onay kutusunu işaretleyerek verdiğiniz açık rızaya dayanılarak işlenir.',
   },
   {
     title: '5. Saklama Süresi',
-    body: 'Randevu talebinize ilişkin veriler, talebin sonuçlandırılmasından itibaren en fazla 2 yıl içinde silinir, yok edilir veya anonim hale getirilir. Mevzuattan doğan zorunlu saklama süreleri bu kuralın istisnasıdır.',
+    body: 'Sipariş ve stok bildirimi talebinize ilişkin veriler, talebin sonuçlandırılmasından itibaren en fazla 2 yıl içinde silinir, yok edilir veya anonim hale getirilir. Mevzuattan doğan zorunlu saklama süreleri bu kuralın istisnasıdır.',
   },
   {
     title: '6. Üçüncü Taraflar ve Veri Aktarımı',
-    body: 'Hizmetin sunulabilmesi için verileriniz sınırlı ölçüde şu sağlayıcılarla paylaşılır: Vercel Inc. (hosting altyapısı; sunucular yurt dışında olabileceğinden veriler KVKK m.9 uyarınca yurt dışına aktarılabilir) ve n8n (randevu talebinizin ilgili ekibe iletilmesini sağlayan otomasyon/webhook aracı). Verileriniz bu sağlayıcılar dışında üçüncü taraflarla paylaşılmaz veya satılmaz.',
+    body: 'Hizmetin sunulabilmesi için verileriniz sınırlı ölçüde şu sağlayıcılarla paylaşılır: Vercel Inc. (hosting altyapısı; sunucular yurt dışında olabileceğinden veriler KVKK m.9 uyarınca yurt dışına aktarılabilir) ve n8n (sipariş ve stok bildirimi taleplerinizin atölye ekibine iletilmesini sağlayan otomasyon/webhook aracı) ve Google LLC (sipariş ve stok bildirimi kayıtlarının tutulduğu Google Sheets; veriler yurt dışına aktarılabilir). Verileriniz bu sağlayıcılar dışında üçüncü taraflarla paylaşılmaz veya satılmaz.',
   },
   {
     title: '7. Haklarınız (KVKK m.11)',
@@ -44,7 +44,7 @@ const SECTIONS: { title: string; body: string }[] = [
 export default function Gizlilik() {
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.updated}>Son güncelleme: 14 Ağustos 2026</Text>
+      <Text style={styles.updated}>Son güncelleme: 24 Ekim 2026</Text>
       {SECTIONS.map((s) => (
         <View key={s.title} style={styles.section}>
           <Text style={styles.sectionTitle}>{s.title}</Text>

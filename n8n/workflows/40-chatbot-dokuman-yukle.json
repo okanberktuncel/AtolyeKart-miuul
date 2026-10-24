@@ -1,0 +1,261 @@
+{
+  "id": "atkDokumanYukle1",
+  "name": "40 · Chatbot dokümanlarını yükle (RAG)",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "32e2b019-6916-4154-af9a-8e40dba7cff7",
+      "name": "Elle çalıştır",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "db9a96b3-82c5-44ec-a7fd-746af6c57dd5",
+      "name": "Koleksiyonu sıfırla",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "method": "DELETE",
+        "url": "={{ $env.QDRANT_URL }}/collections/atolyekart_docs",
+        "options": {}
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "id": "6dfef44a-333f-4550-a1a1-daf93e5beda5",
+      "name": "PDF'leri oku",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "fileSelector": "/files/docs/*.pdf",
+        "options": {}
+      },
+      "executeOnce": true
+    },
+    {
+      "id": "80f15f6a-d4a7-4188-a93f-b152eb286601",
+      "name": "Metadata ekle",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Dosya adından metadata üretir: seramik-bakim-rehberi-v1.pdf → category=seramik, version=1\nconst fileName = $input.item.binary.data.fileName;\nconst category = fileName.startsWith('seramik') ? 'seramik' : fileName.includes('mum') ? 'mum' : 'genel';\nconst version = (fileName.match(/-v(\\d+)\\.pdf$/) || [])[1] || '1';\nreturn { json: { doc: fileName, category, version }, binary: $input.item.binary };"
+      }
+    },
+    {
+      "id": "e6889727-6163-4be7-a030-2475f9cf9ef8",
+      "name": "Qdrant'a yaz",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+      "typeVersion": 1.3,
+      "position": [
+        900,
+        0
+      ],
+      "parameters": {
+        "mode": "insert",
+        "qdrantCollection": {
+          "__rl": true,
+          "mode": "id",
+          "value": "atolyekart_docs"
+        },
+        "options": {}
+      },
+      "credentials": {
+        "qdrantApi": {
+          "id": "atkQdrant0000001",
+          "name": "Qdrant (local)"
+        }
+      }
+    },
+    {
+      "id": "35e02d44-25db-47e3-a938-774dfa8405f4",
+      "name": "Ollama Embeddings",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOllama",
+      "typeVersion": 1,
+      "position": [
+        840,
+        220
+      ],
+      "parameters": {
+        "model": "nomic-embed-text"
+      },
+      "credentials": {
+        "ollamaApi": {
+          "id": "atkOllama0000001",
+          "name": "Ollama (local)"
+        }
+      }
+    },
+    {
+      "id": "541a4d09-e0d9-41ca-a73b-216fabe63df1",
+      "name": "PDF yükleyici",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        1020,
+        220
+      ],
+      "parameters": {
+        "dataType": "binary",
+        "loader": "pdfLoader",
+        "textSplittingMode": "custom",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "doc",
+                "value": "={{ $json.doc }}"
+              },
+              {
+                "name": "category",
+                "value": "={{ $json.category }}"
+              },
+              {
+                "name": "version",
+                "value": "={{ $json.version }}"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "8777f6bd-e29a-425b-ad2d-4ce940dcdb3a",
+      "name": "Chunk'lara böl",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        1100,
+        400
+      ],
+      "parameters": {
+        "chunkSize": 600,
+        "chunkOverlap": 80,
+        "options": {}
+      }
+    },
+    {
+      "id": "50b40d81-7665-4447-a2e7-68f82d04eb10",
+      "name": "Not",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -380
+      ],
+      "parameters": {
+        "content": "## Doküman yükleme (Hafta 5 · RAG)\n`n8n/docs/*.pdf` dosyaları container'da `/files/docs` altına bağlanır.\n\n1. Koleksiyonu sıfırlar (yeniden çalıştırmak = **güncelleme**)\n2. PDF'leri okur, dosya adından `category` + `version` metadata'sı üretir\n3. 600 karakterlik chunk'lar (80 overlap) → Ollama `nomic-embed-text` → Qdrant `atolyekart_docs`\n\nKontrol: http://localhost:6333/dashboard",
+        "width": 600,
+        "height": 300,
+        "color": 7
+      }
+    }
+  ],
+  "connections": {
+    "Elle çalıştır": {
+      "main": [
+        [
+          {
+            "node": "Koleksiyonu sıfırla",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Koleksiyonu sıfırla": {
+      "main": [
+        [
+          {
+            "node": "PDF'leri oku",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PDF'leri oku": {
+      "main": [
+        [
+          {
+            "node": "Metadata ekle",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Metadata ekle": {
+      "main": [
+        [
+          {
+            "node": "Qdrant'a yaz",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Embeddings": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Qdrant'a yaz",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PDF yükleyici": {
+      "ai_document": [
+        [
+          {
+            "node": "Qdrant'a yaz",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chunk'lara böl": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "PDF yükleyici",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Istanbul"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

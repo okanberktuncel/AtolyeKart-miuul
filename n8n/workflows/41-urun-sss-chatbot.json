@@ -1,0 +1,254 @@
+{
+  "id": "atkChatbot000001",
+  "name": "41 · Ürün SSS chatbot'u",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "3d50b7a8-2161-48c9-ac84-24a6bc381c67",
+      "name": "Chat Trigger",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "public": true,
+        "mode": "hostedChat",
+        "initialMessages": "Merhaba! Ben AtölyeKart asistanıyım. Seramik bakımı, mum kullanımı ya da stoktaki ürünler hakkında sorabilirsin.",
+        "options": {
+          "title": "AtölyeKart Asistan",
+          "subtitle": "El yapımı ürünler hakkında sorularınız",
+          "inputPlaceholder": "Sorunuzu yazın..."
+        }
+      },
+      "webhookId": "6453f1d4-e85d-48ca-a114-80beed648011"
+    },
+    {
+      "id": "1b812f31-99d7-43a3-a69d-5df84ec8f1da",
+      "name": "AtölyeKart asistanı",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        260,
+        0
+      ],
+      "parameters": {
+        "options": {
+          "systemMessage": "Sen AtölyeKart'ın ürün SSS asistanısın. AtölyeKart el yapımı seramik, mum ve takı üreten küçük bir atölye.\n\nKurallar:\n- Bakım, kullanım, güvenlik ve malzeme sorularında ÖNCE urun_rehberleri aracıyla doküman ara ve cevabını yalnızca bulduğun içeriğe dayandır. Cevabın sonunda hangi rehberden geldiğini belirt (ör. \"Kaynak: Seramik Bakım Rehberi\").\n- Stok, fiyat veya ürün listesi sorularında urun_katalogu aracını kullan.\n- Dokümanda veya katalogda olmayan bir şeyi uydurma; bilmiyorsan \"Bu konuda bilgim yok, atölyeye e-posta ile sorabilirsiniz\" de.\n- Türkçe, kısa ve samimi yanıt ver. Önceki mesajlarda kullanıcının adını veya sorduğu ürünü öğrendiysen hatırla.",
+          "maxIterations": 6
+        }
+      }
+    },
+    {
+      "id": "c263d736-9f97-4208-a593-4564df7ae3be",
+      "name": "Ollama Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        100,
+        240
+      ],
+      "parameters": {
+        "model": "qwen2.5:7b",
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "credentials": {
+        "ollamaApi": {
+          "id": "atkOllama0000001",
+          "name": "Ollama (local)"
+        }
+      }
+    },
+    {
+      "id": "8b6fe8c7-a908-4568-aa7c-b8347c55d3ab",
+      "name": "Redis sohbet geçmişi",
+      "type": "@n8n/n8n-nodes-langchain.memoryRedisChat",
+      "typeVersion": 1.5,
+      "position": [
+        260,
+        240
+      ],
+      "parameters": {
+        "sessionTTL": 86400,
+        "contextWindowLength": 10
+      },
+      "credentials": {
+        "redis": {
+          "id": "atkRedis00000001",
+          "name": "Redis (local)"
+        }
+      }
+    },
+    {
+      "id": "7b5cb145-6b00-454f-a150-97718ece2727",
+      "name": "urun_rehberleri",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+      "typeVersion": 1.3,
+      "position": [
+        440,
+        240
+      ],
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "AtölyeKart'ın Seramik Bakım Rehberi ve Soya Mumu Kullanım Rehberi dokümanlarında arama yapar. Bakım, temizlik, güvenlik, yanma süresi, fırın/bulaşık makinesi gibi sorular için kullan.",
+        "qdrantCollection": {
+          "__rl": true,
+          "mode": "id",
+          "value": "atolyekart_docs"
+        },
+        "topK": 4,
+        "includeDocumentMetadata": true,
+        "options": {}
+      },
+      "credentials": {
+        "qdrantApi": {
+          "id": "atkQdrant0000001",
+          "name": "Qdrant (local)"
+        }
+      }
+    },
+    {
+      "id": "cc075c09-8694-4260-a9c3-6ec64378166b",
+      "name": "Ollama Embeddings",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOllama",
+      "typeVersion": 1,
+      "position": [
+        440,
+        440
+      ],
+      "parameters": {
+        "model": "nomic-embed-text"
+      },
+      "credentials": {
+        "ollamaApi": {
+          "id": "atkOllama0000001",
+          "name": "Ollama (local)"
+        }
+      }
+    },
+    {
+      "id": "62f99f08-065c-4503-a84c-813dcf0652bb",
+      "name": "urun_katalogu",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        640,
+        240
+      ],
+      "parameters": {
+        "description": "AtölyeKart ürün kataloğunu döndürür: her ürün için id, ad, kategori (seramik, mum, taki), fiyat (TL) ve stok durumu (inStock). Stokta olan ürünleri veya bir kategorideki alternatifleri bulmak için kullan.",
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "atkUrunKatalog01",
+          "cachedResultName": "11 · Ürün kataloğu (alt akış)"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      }
+    },
+    {
+      "id": "39aab2a1-c08b-47d0-a244-acba92f3a1c1",
+      "name": "Not",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -340
+      ],
+      "parameters": {
+        "content": "## Ürün SSS chatbot'u (Hafta 5 + 6)\n- **Chat Trigger**: n8n'in hazır sohbet sayfası (workflow'u aktif edince URL'si Chat Trigger node'unda görünür)\n- **Qdrant aracı**: rehber PDF'lerinden RAG (metadata: `doc`, `category`, `version`)\n- **Redis sohbet geçmişi**: Chat Trigger'ın `sessionId`'si ile ziyaretçi bazlı hafıza (24 saat TTL, son 10 mesaj)\n- **urun_katalogu**: stok/fiyat soruları için",
+        "width": 620,
+        "height": 280,
+        "color": 7
+      }
+    }
+  ],
+  "connections": {
+    "Chat Trigger": {
+      "main": [
+        [
+          {
+            "node": "AtölyeKart asistanı",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AtölyeKart asistanı",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis sohbet geçmişi": {
+      "ai_memory": [
+        [
+          {
+            "node": "AtölyeKart asistanı",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "urun_rehberleri": {
+      "ai_tool": [
+        [
+          {
+            "node": "AtölyeKart asistanı",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Embeddings": {
+      "ai_embedding": [
+        [
+          {
+            "node": "urun_rehberleri",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "urun_katalogu": {
+      "ai_tool": [
+        [
+          {
+            "node": "AtölyeKart asistanı",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Istanbul"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

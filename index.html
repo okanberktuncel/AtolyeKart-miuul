@@ -208,6 +208,25 @@
   .card-image {
     height: 220px;
     overflow: hidden;
+    position: relative;
+  }
+
+  .card-image.sold-out img {
+    filter: grayscale(0.7);
+    opacity: 0.75;
+  }
+
+  .stock-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: var(--text-main);
+    color: #fff;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 3px;
   }
 
   .card-image img {
@@ -283,6 +302,27 @@
     background: var(--accent-dark);
   }
 
+  .btn:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+  }
+
+  .btn-secondary:hover {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .card-action {
+    width: 100%;
+    margin-top: 14px;
+  }
+
   .note {
     display: inline-block;
     margin-top: 14px;
@@ -332,13 +372,6 @@
 
   .link-inline:hover {
     color: var(--accent-dark);
-  }
-
-  .modal-privacy-note {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    text-align: center;
-    margin-top: 10px;
   }
 
   .footer-links {
@@ -547,16 +580,7 @@
     .qr-item svg { width: 48px; height: 48px; }
   }
 
-  /* Nav CTA + Randevu penceresi */
-  .nav-link-cta {
-    background: var(--accent);
-    color: #fff;
-  }
-
-  .nav-link-cta:hover {
-    background: var(--accent-dark);
-    color: #fff;
-  }
+  /* Sipariş / Stok bildirimi pencereleri */
 
   .modal-overlay {
     position: fixed;
@@ -577,6 +601,8 @@
     padding: 28px;
     box-shadow: 0 20px 48px rgba(58, 49, 41, 0.25);
     position: relative;
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
   }
 
   .modal-close {
@@ -635,6 +661,35 @@
     border-color: var(--accent);
   }
 
+  .consent-field {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+    line-height: 1.4;
+  }
+
+  .consent-field input {
+    margin-top: 2px;
+    accent-color: var(--accent);
+  }
+
+  .form-error {
+    color: #a23b2a;
+    font-size: 0.85rem;
+    margin-bottom: 12px;
+  }
+
+  .load-error {
+    max-width: 560px;
+    margin: 80px auto;
+    padding: 0 20px;
+    text-align: center;
+    color: var(--text-muted);
+  }
+
   .modal-success {
     text-align: center;
     color: var(--text-main);
@@ -655,105 +710,9 @@
   const { useState, useEffect } = React;
   const { QRCodeSVG } = QRCodeReact;
 
-  const PRODUCTS = [
-    {
-      id: 'seramik-kupa',
-      category: 'seramik',
-      title: 'Toprak Ton Kupa',
-      description: 'El çarkında şekillendirilmiş, fırında iki kez pişirilmiş kupa. Her parça birbirinden hafifçe farklı desen ve dokuya sahip — tamamen aynısı yok. Günlük kahve ve çay keyfiniz için.',
-      price: 320,
-      unit: 'adet',
-      image: 'https://images.unsplash.com/photo-1536936812504-0e77dc3f0b40?fm=jpg&q=60&w=800&auto=format&fit=crop',
-    },
-    {
-      id: 'seramik-vazo',
-      category: 'seramik',
-      title: 'Toprak Kahve Vazo',
-      description: 'Elde şekillendirilmiş, mat sırlı vazo. Kuru veya taze çiçek düzenlemeleri için sade ve sıcak bir dokunuş.',
-      price: 380,
-      unit: 'adet',
-      image: 'https://images.unsplash.com/photo-1597696929736-6d13bed8e6a8?fm=jpg&q=60&w=800&auto=format&fit=crop',
-    },
-    {
-      id: 'seramik-tabak',
-      category: 'seramik',
-      title: 'Renkli Desenli Tabak',
-      description: 'Elde boyanmış renkli sıçrama desenli servis tabağı. Kahvaltı sofralarına ve pastalarınıza eşlik eder.',
-      price: 260,
-      unit: 'adet',
-      image: 'https://images.unsplash.com/photo-1745828186668-d1131baac067?fm=jpg&q=60&w=800&auto=format&fit=crop',
-    },
-    {
-      id: 'seramik-kase',
-      category: 'seramik',
-      title: 'Sarı Ton Kase',
-      description: 'Yumuşak sarı-yeşil tonlarda, çorba ve salata servisi için elde şekillendirilmiş kase.',
-      price: 240,
-      unit: 'adet',
-      image: 'https://images.unsplash.com/photo-1769163211419-f6befc56b8ff?fm=jpg&q=60&w=800&auto=format&fit=crop',
-    },
-    {
-      id: 'mum-sandal',
-      category: 'mum',
-      title: 'Sandal Ağacı Soya Mumu',
-      description: '%100 doğal soya balmumundan, elle dökülerek hazırlanmış kokulu mum. Cam kavanozu yeniden kullanılabilir. Ortalama 40 saat yanma süresi.',
-      price: 245,
-      unit: 'adet',
-      image: 'https://images.unsplash.com/photo-1663089889826-0575c6ae19de?fm=jpg&q=60&w=800&auto=format&fit=crop',
-    },
-    {
-      id: 'mum-karanlik',
-      category: 'mum',
-      title: 'Gece Kokusu Mumu',
-      description: 'Odunsu ve baharatlı notalar taşıyan, akşam saatleri için elde dökülmüş özel seri mum.',
-      price: 270,
-      unit: 'adet',
-      image: 'https://images.unsplash.com/photo-1714376880837-f40388a805e5?fm=jpg&q=60&w=800&auto=format&fit=crop',
-    },
-    {
-      id: 'mum-kavanoz',
-      category: 'mum',
-      title: 'Cam Kavanoz Mumu',
-      description: 'Şeffaf cam kavanoz içinde, hafif ve ferah kokulu soya mumu. Bitince saksı veya kalemlik olarak kullanılabilir.',
-      price: 220,
-      unit: 'adet',
-      image: 'https://images.unsplash.com/photo-1607284235728-e0d256e519f9?fm=jpg&q=60&w=800&auto=format&fit=crop',
-    },
-    {
-      id: 'taki-kupe',
-      category: 'taki',
-      title: 'Ay Taşı Damla Küpe',
-      description: 'Doğal ay taşı ve reçine detaylarla el işçiliğiyle bir araya getirilmiş küpe. Hipoalerjenik çelik mekanizma ile hassas ciltlere de uygun.',
-      price: 410,
-      unit: 'çift',
-      image: 'https://images.unsplash.com/photo-1756792340190-2039b9a1787d?fm=jpg&q=60&w=800&auto=format&fit=crop',
-    },
-    {
-      id: 'taki-kolye',
-      category: 'taki',
-      title: 'Boncuk Detaylı Kolye',
-      description: 'Doğal taş boncuklarla elde dizilmiş, ince zincirli kolye. Günlük kombinlere sade bir vurgu katar.',
-      price: 350,
-      unit: 'adet',
-      image: 'https://images.unsplash.com/photo-1654699991520-aaaf4dd2608b?fm=jpg&q=60&w=800&auto=format&fit=crop',
-    },
-    {
-      id: 'taki-bileklik',
-      category: 'taki',
-      title: 'İnce Zincir Bileklik',
-      description: 'Zarif ve ince tasarımlı, elde birleştirilmiş halka detaylı bileklik. Tek başına veya katlı kombinlerde şık durur.',
-      price: 290,
-      unit: 'adet',
-      image: 'https://images.unsplash.com/photo-1602527428055-a2526fabdc9f?fm=jpg&q=60&w=800&auto=format&fit=crop',
-    },
-  ];
-
-  const CATEGORIES = [
-    { id: 'tumu', label: 'Tümü' },
-    { id: 'seramik', label: 'Seramik' },
-    { id: 'mum', label: 'Mum' },
-    { id: 'taki', label: 'Takı' },
-  ];
+  // Ürün verisi tek kaynaktan gelir: src/data/products.json (web, mobil ve n8n aynı dosyayı kullanır).
+  let PRODUCTS = [];
+  let CATEGORIES = [];
 
   const MOCK_USER = {
     name: 'Ayşe Yılmaz',
@@ -762,22 +721,25 @@
     orders: [],
   };
 
-  const WEBHOOK_URL = ''; // TODO: n8n webhook adresi hazır olduğunda buraya yapıştır
-
-  function stripHtml(value) {
-    return value.replace(/<[^>]*>/g, '').trim();
-  }
-
-  function sendWebhook(event, payload) {
-    if (!WEBHOOK_URL) {
-      console.info(`[sendWebhook] WEBHOOK_URL henüz ayarlanmadı, "${event}" gönderilmedi.`, payload);
-      return Promise.resolve();
+  // Formlar n8n'e doğrudan değil, kendi API route'larımız üzerinden gider (api/order.js, api/stock-notify.js).
+  // Webhook adresi ve secret yalnızca sunucuda (Vercel env) durur.
+  async function postForm(path, payload) {
+    let res;
+    try {
+      res = await fetch(path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...payload, source: 'web' }),
+      });
+    } catch (err) {
+      throw new Error('Sunucuya ulaşılamadı. Lütfen bağlantınızı kontrol edip tekrar deneyin.');
     }
-    return fetch(WEBHOOK_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ event, timestamp: new Date().toISOString(), ...payload }),
-    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const firstFieldError = data.errors ? Object.values(data.errors)[0] : null;
+      throw new Error(firstFieldError || data.error || 'Bir hata oluştu, lütfen tekrar deneyin.');
+    }
+    return data;
   }
 
   function parseHash() {
@@ -829,12 +791,7 @@
     );
   }
 
-  function AppointmentModal({ onClose }) {
-    const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
-    const [submitted, setSubmitted] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
+  function Modal({ onClose, children }) {
     useEffect(() => {
       document.body.style.overflow = 'hidden';
       function onKeyDown(e) {
@@ -847,78 +804,168 @@
       };
     }, []);
 
-    async function handleSubmit(e) {
-      e.preventDefault();
-      setIsSubmitting(true);
-      try {
-        await sendWebhook('appointment.request', {
-          name: stripHtml(name),
-          email: stripHtml(email),
-        });
-        setSubmitted(true);
-      } finally {
-        setIsSubmitting(false);
-      }
-    }
-
     return (
       <div className="modal-overlay" onClick={onClose}>
         <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
           <button className="modal-close" onClick={onClose} aria-label="Kapat">×</button>
-          {submitted ? (
-            <React.Fragment>
-              <h2 className="modal-title">Talebiniz alındı</h2>
-              <p className="modal-success">En kısa sürede sizinle iletişime geçeceğiz.</p>
-              <button className="btn" style={{ width: '100%', marginTop: 12 }} onClick={onClose}>
-                Kapat
-              </button>
-            </React.Fragment>
-          ) : (
-            <React.Fragment>
-              <h2 className="modal-title">Müşteri Temsilcisi ile Randevu Talep Et</h2>
-              <p className="modal-desc">
-                Size en kısa sürede dönüş yapabilmemiz için ad soyad ve e-posta adresinizi paylaşın.
-              </p>
-              <form onSubmit={handleSubmit}>
-                <div className="form-field">
-                  <label htmlFor="appointment-name">Ad Soyad</label>
-                  <input
-                    id="appointment-name"
-                    type="text"
-                    required
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                  />
-                </div>
-                <div className="form-field">
-                  <label htmlFor="appointment-email">E-posta</label>
-                  <input
-                    id="appointment-email"
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
-                <button type="submit" className="btn" style={{ width: '100%' }} disabled={isSubmitting}>
-                  {isSubmitting ? 'Gönderiliyor...' : 'Randevu Talebi Gönder'}
-                </button>
-              </form>
-              <p className="modal-privacy-note">
-                Gönder'e tıklayarak paylaştığınız verilerin{' '}
-                <a className="link-inline" href="#/gizlilik" target="_blank" rel="noopener noreferrer">
-                  Gizlilik Politikası
-                </a>{' '}
-                kapsamında işlenmesini kabul edersiniz.
-              </p>
-            </React.Fragment>
-          )}
+          {children}
         </div>
       </div>
     );
   }
 
-  function NavBar({ page, cartCount, onNavigate, onOpenAppointment }) {
+  function ConsentCheckbox({ id, checked, onChange }) {
+    return (
+      <label className="consent-field" htmlFor={id}>
+        <input id={id} type="checkbox" required checked={checked} onChange={(e) => onChange(e.target.checked)} />
+        <span>
+          Kişisel verilerimin{' '}
+          <a className="link-inline" href="#/gizlilik" target="_blank" rel="noopener noreferrer">
+            Gizlilik Politikası
+          </a>{' '}
+          kapsamında işlenmesine açık rıza veriyorum.
+        </span>
+      </label>
+    );
+  }
+
+  // Sipariş ve stok bildirimi formlarının ortak gönderim mantığı: yükleniyor durumu, sunucu hatası, başarı ekranı.
+  function useFormSubmit(path) {
+    const [submitted, setSubmitted] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState('');
+
+    async function submit(payload) {
+      setIsSubmitting(true);
+      setError('');
+      try {
+        await postForm(path, payload);
+        setSubmitted(true);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setIsSubmitting(false);
+      }
+    }
+
+    return { submitted, isSubmitting, error, submit };
+  }
+
+  function SuccessView({ title, message, onClose }) {
+    return (
+      <React.Fragment>
+        <h2 className="modal-title">{title}</h2>
+        <p className="modal-success">{message}</p>
+        <button className="btn" style={{ width: '100%', marginTop: 12 }} onClick={onClose}>
+          Kapat
+        </button>
+      </React.Fragment>
+    );
+  }
+
+  function OrderModal({ product, onClose }) {
+    const [name, setName] = useState('');
+    const [phone, setPhone] = useState('');
+    const [email, setEmail] = useState('');
+    const [quantity, setQuantity] = useState(1);
+    const [consent, setConsent] = useState(false);
+    const { submitted, isSubmitting, error, submit } = useFormSubmit('/api/order');
+
+    function handleSubmit(e) {
+      e.preventDefault();
+      submit({ name, phone, email, quantity: Number(quantity), productId: product.id, consent });
+    }
+
+    return (
+      <Modal onClose={onClose}>
+        {submitted ? (
+          <SuccessView
+            title="Siparişiniz alındı"
+            message={`${product.title} için siparişiniz bize ulaştı. Hazırlık süresini e-posta ile bildireceğiz.`}
+            onClose={onClose}
+          />
+        ) : (
+          <React.Fragment>
+            <h2 className="modal-title">Sipariş Ver</h2>
+            <p className="modal-desc">
+              <strong>{product.title}</strong> · ₺{product.price} / {product.unit}
+            </p>
+            <form onSubmit={handleSubmit}>
+              <div className="form-field">
+                <label htmlFor="order-name">Ad Soyad</label>
+                <input id="order-name" type="text" required maxLength={80} value={name} onChange={(e) => setName(e.target.value)} />
+              </div>
+              <div className="form-field">
+                <label htmlFor="order-phone">Telefon</label>
+                <input id="order-phone" type="tel" required placeholder="05xx xxx xx xx" value={phone} onChange={(e) => setPhone(e.target.value)} />
+              </div>
+              <div className="form-field">
+                <label htmlFor="order-email">E-posta</label>
+                <input id="order-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+              </div>
+              <div className="form-field">
+                <label htmlFor="order-quantity">Adet</label>
+                <input id="order-quantity" type="number" required min={1} max={20} value={quantity} onChange={(e) => setQuantity(e.target.value)} />
+              </div>
+              <ConsentCheckbox id="order-consent" checked={consent} onChange={setConsent} />
+              {error && <p className="form-error" role="alert">{error}</p>}
+              <button type="submit" className="btn" style={{ width: '100%' }} disabled={isSubmitting}>
+                {isSubmitting ? 'Gönderiliyor...' : 'Siparişi Gönder'}
+              </button>
+            </form>
+          </React.Fragment>
+        )}
+      </Modal>
+    );
+  }
+
+  function StockNotifyModal({ product, onClose }) {
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+    const [consent, setConsent] = useState(false);
+    const { submitted, isSubmitting, error, submit } = useFormSubmit('/api/stock-notify');
+
+    function handleSubmit(e) {
+      e.preventDefault();
+      submit({ name, email, productId: product.id, consent });
+    }
+
+    return (
+      <Modal onClose={onClose}>
+        {submitted ? (
+          <SuccessView
+            title="Talebiniz alındı"
+            message={`${product.title} yeniden stoğa girdiğinde size e-posta göndereceğiz.`}
+            onClose={onClose}
+          />
+        ) : (
+          <React.Fragment>
+            <h2 className="modal-title">Stok Bildirimi İste</h2>
+            <p className="modal-desc">
+              <strong>{product.title}</strong> şu an tükendi. Yeniden üretildiğinde size haber verelim.
+            </p>
+            <form onSubmit={handleSubmit}>
+              <div className="form-field">
+                <label htmlFor="stock-name">Ad Soyad</label>
+                <input id="stock-name" type="text" required maxLength={80} value={name} onChange={(e) => setName(e.target.value)} />
+              </div>
+              <div className="form-field">
+                <label htmlFor="stock-email">E-posta</label>
+                <input id="stock-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+              </div>
+              <ConsentCheckbox id="stock-consent" checked={consent} onChange={setConsent} />
+              {error && <p className="form-error" role="alert">{error}</p>}
+              <button type="submit" className="btn" style={{ width: '100%' }} disabled={isSubmitting}>
+                {isSubmitting ? 'Gönderiliyor...' : 'Bildirim İste'}
+              </button>
+            </form>
+          </React.Fragment>
+        )}
+      </Modal>
+    );
+  }
+
+  function NavBar({ page, cartCount, onNavigate }) {
     const links = [
       { id: 'anasayfa', label: 'Anasayfa' },
       { id: 'urunler', label: 'Ürünler' },
@@ -943,11 +990,6 @@
                 </button>
               </li>
             ))}
-            <li>
-              <button className="nav-link nav-link-cta" onClick={onOpenAppointment}>
-                Randevu Talep Et
-              </button>
-            </li>
           </ul>
         </div>
       </nav>
@@ -986,12 +1028,19 @@
     );
   }
 
-  function ProductCard({ product, onAddToCart }) {
+  function ProductImage({ product }) {
+    return (
+      <div className={"card-image" + (product.inStock ? "" : " sold-out")}>
+        <img src={product.image} alt={product.title} />
+        {!product.inStock && <span className="stock-badge">Tükendi</span>}
+      </div>
+    );
+  }
+
+  function ProductCard({ product, onAddToCart, onOrder, onStockNotify }) {
     return (
       <article className="card">
-        <div className="card-image">
-          <img src={product.image} alt={product.title} />
-        </div>
+        <ProductImage product={product} />
         <div className="card-body">
           <span className="category-label">{product.category}</span>
           <h2 className="card-title">{product.title}</h2>
@@ -1001,17 +1050,29 @@
               ₺{product.price}
               <span className="unit"> / {product.unit}</span>
             </span>
-            <button className="btn" onClick={() => onAddToCart(product.id)}>
-              Sepete Ekle
-            </button>
+            {product.inStock && (
+              <button className="btn btn-secondary" onClick={() => onAddToCart(product.id)}>
+                Sepete Ekle
+              </button>
+            )}
           </div>
+          {product.inStock ? (
+            <button className="btn card-action" onClick={() => onOrder(product)}>
+              Sipariş Ver
+            </button>
+          ) : (
+            <button className="btn btn-secondary card-action" onClick={() => onStockNotify(product)}>
+              Stok Bildirimi İste
+            </button>
+          )}
           <span className="note">El yapımı · Sınırlı sayıda üretim</span>
         </div>
       </article>
     );
   }
 
-  function Urunler({ activeCategory, onSelectCategory, onAddToCart }) {
+  // ProductList: kataloğu aktif kategoriye göre filtreleyip ProductCard'ları dizer.
+  function Urunler({ activeCategory, onSelectCategory, onAddToCart, onOrder, onStockNotify }) {
     const filtered = activeCategory === 'tumu'
       ? PRODUCTS
       : PRODUCTS.filter((p) => p.category === activeCategory);
@@ -1023,7 +1084,13 @@
         <main>
           <div className="catalog">
             {filtered.map((product) => (
-              <ProductCard key={product.id} product={product} onAddToCart={onAddToCart} />
+              <ProductCard
+                key={product.id}
+                product={product}
+                onAddToCart={onAddToCart}
+                onOrder={onOrder}
+                onStockNotify={onStockNotify}
+              />
             ))}
           </div>
         </main>
@@ -1060,7 +1127,7 @@
     return (
       <div className="profile-page policy-page">
         <h1 className="page-title" style={{ margin: '0 0 24px', padding: 0 }}>Gizlilik Politikası</h1>
-        <p className="policy-updated">Son güncelleme: 14 Ağustos 2026</p>
+        <p className="policy-updated">Son güncelleme: 24 Ekim 2026</p>
 
         <section>
           <h2>1. Veri Sorumlusu</h2>
@@ -1073,10 +1140,12 @@
 
         <section>
           <h2>2. Toplanan Kişisel Veriler</h2>
-          <p>"Müşteri Temsilcisi ile Randevu Talep Et" formunu doldurduğunuzda yalnızca şu veriler toplanır:</p>
+          <p>"Sipariş Ver" ve "Stok Bildirimi İste" formlarını doldurduğunuzda yalnızca şu veriler toplanır:</p>
           <ul>
             <li>Ad Soyad</li>
             <li>E-posta adresi</li>
+            <li>Telefon numarası (yalnızca sipariş formunda)</li>
+            <li>Seçtiğiniz ürün ve adet</li>
           </ul>
           <p>
             Sepete veya favorilere ürün eklemeniz ayrıca sistemsel olarak kaydedilir; bu kayıtlar kimliğinizi
@@ -1087,23 +1156,24 @@
         <section>
           <h2>3. İşlenme Amacı</h2>
           <p>
-            Paylaştığınız veriler yalnızca randevu talebinizi değerlendirmek ve sizinle iletişime geçmek amacıyla
-            işlenir; pazarlama veya üçüncü taraflara satış amacıyla kullanılmaz.
+            Paylaştığınız veriler yalnızca siparişinizi hazırlamak, sizinle sipariş hakkında iletişime geçmek ve
+            talep ettiğiniz ürün yeniden stoğa girdiğinde size haber vermek amacıyla işlenir; pazarlama veya üçüncü
+            taraflara satış amacıyla kullanılmaz.
           </p>
         </section>
 
         <section>
           <h2>4. Hukuki Sebep</h2>
           <p>
-            Verileriniz, KVKK m.5/2 kapsamında sözleşme öncesi görüşme sürecinin yürütülmesi ve tarafımızın meşru
-            menfaati doğrultusunda, formu göndererek verdiğiniz açık rızaya dayanılarak işlenir.
+            Verileriniz, KVKK m.5/2 kapsamında sözleşmenin kurulması ve ifası ile tarafımızın meşru menfaati
+            doğrultusunda, formdaki onay kutusunu işaretleyerek verdiğiniz açık rızaya dayanılarak işlenir.
           </p>
         </section>
 
         <section>
           <h2>5. Saklama Süresi</h2>
           <p>
-            Randevu talebinize ilişkin veriler, talebin sonuçlandırılmasından itibaren en fazla <strong>2 yıl</strong>{' '}
+            Sipariş ve stok bildirimi talebinize ilişkin veriler, talebin sonuçlandırılmasından itibaren en fazla <strong>2 yıl</strong>{' '}
             içinde silinir, yok edilir veya anonim hale getirilir. Mevzuattan doğan zorunlu saklama süreleri bu
             kuralın istisnasıdır.
           </p>
@@ -1118,8 +1188,12 @@
               yurt dışında olabileceğinden veriler KVKK m.9 uyarınca yurt dışına aktarılabilir.
             </li>
             <li>
-              <strong>n8n</strong> — randevu talebinizin ilgili ekibe iletilmesini sağlayan otomasyon/webhook
-              aracı.
+              <strong>n8n</strong> — sipariş ve stok bildirimi taleplerinizin atölye ekibine iletilmesini sağlayan
+              otomasyon/webhook aracı.
+            </li>
+            <li>
+              <strong>Google LLC (Google Sheets)</strong> — sipariş ve stok bildirimi kayıtlarının tutulduğu tablo
+              hizmeti; veriler KVKK m.9 uyarınca yurt dışına aktarılabilir.
             </li>
           </ul>
           <p>Verileriniz bu sağlayıcılar dışında üçüncü taraflarla paylaşılmaz veya satılmaz.</p>
@@ -1249,7 +1323,8 @@
     const [page, setPage] = useState(initialRoute.page);
     const [activeCategory, setActiveCategory] = useState(initialRoute.category);
     const [cart, setCart] = useState([]);
-    const [appointmentOpen, setAppointmentOpen] = useState(false);
+    // { type: 'order' | 'stock', product } — açık olan form modalı
+    const [activeForm, setActiveForm] = useState(null);
 
     useEffect(() => {
       function onHashChange() {
@@ -1308,6 +1383,8 @@
           activeCategory={activeCategory}
           onSelectCategory={selectCategory}
           onAddToCart={addToCart}
+          onOrder={(product) => setActiveForm({ type: 'order', product })}
+          onStockNotify={(product) => setActiveForm({ type: 'stock', product })}
         />
       );
     } else if (page === 'profil') {
@@ -1324,19 +1401,34 @@
           page={page}
           cartCount={cartCount}
           onNavigate={navigate}
-          onOpenAppointment={() => setAppointmentOpen(true)}
         />
         {content}
         <Footer />
-        {appointmentOpen && (
-          <AppointmentModal onClose={() => setAppointmentOpen(false)} />
+        {activeForm?.type === 'order' && (
+          <OrderModal product={activeForm.product} onClose={() => setActiveForm(null)} />
+        )}
+        {activeForm?.type === 'stock' && (
+          <StockNotifyModal product={activeForm.product} onClose={() => setActiveForm(null)} />
         )}
       </div>
     );
   }
 
   const root = ReactDOM.createRoot(document.getElementById('root'));
-  root.render(<App />);
+  fetch('src/data/products.json')
+    .then((res) => res.json())
+    .then((data) => {
+      PRODUCTS = data.products;
+      CATEGORIES = data.categories;
+      root.render(<App />);
+    })
+    .catch(() => {
+      root.render(
+        <p className="load-error">
+          Ürün verisi yüklenemedi. Siteyi bir sunucu üzerinden açın (ör. <code>npm run dev</code>).
+        </p>
+      );
+    });
 </script>
 
 </body>

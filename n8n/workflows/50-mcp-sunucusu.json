@@ -1,0 +1,87 @@
+{
+  "id": "atkMcpSunucu0001",
+  "name": "50 · MCP sunucusu",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "0e7ab509-5dfb-4d2a-a5c5-02f475e8cc66",
+      "name": "MCP Server Trigger",
+      "type": "@n8n/n8n-nodes-langchain.mcpTrigger",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "path": "atolyekart"
+      },
+      "webhookId": "0a46ce74-1a1a-41e3-aa8f-f2344b00be1d"
+    },
+    {
+      "id": "5fd15262-5ccc-459a-a1ed-c596aea75f31",
+      "name": "urun_katalogu",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        220
+      ],
+      "parameters": {
+        "description": "AtölyeKart ürün kataloğunu döndürür: her ürün için id, ad, kategori (seramik, mum, taki), fiyat (TL) ve stok durumu (inStock). Stokta olan ürünleri veya bir kategorideki alternatifleri bulmak için kullan.",
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "atkUrunKatalog01",
+          "cachedResultName": "11 · Ürün kataloğu (alt akış)"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      }
+    },
+    {
+      "id": "cbed994e-2f44-4bd0-a684-356d89fdd814",
+      "name": "Not",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -320
+      ],
+      "parameters": {
+        "content": "## MCP sunucusu (Hafta 6)\nWorkflow aktifken Claude Code'a bağla:\n\n`claude mcp add --transport http atolyekart http://localhost:5678/mcp/atolyekart`\n\nAraç: `urun_katalogu` (Claude'a \"stokta hangi mumlar var?\" diye sorabilirsin).",
+        "width": 620,
+        "height": 260,
+        "color": 7
+      }
+    }
+  ],
+  "connections": {
+    "urun_katalogu": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Istanbul"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

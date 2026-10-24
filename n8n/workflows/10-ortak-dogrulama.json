@@ -1,0 +1,190 @@
+{
+  "id": "atkDogrulama0001",
+  "name": "10 · Ortak doğrulama (alt akış)",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "9b284179-2a51-4732-a91b-b92985000b78",
+      "name": "Alt akış girişi",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "inputSource": "passthrough"
+      }
+    },
+    {
+      "id": "fcea7695-05f9-407c-a9c6-2464dcf91b8a",
+      "name": "products.json oku",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "url": "={{ $env.ATOLYEKART_SITE_URL }}/src/data/products.json",
+        "options": {
+          "timeout": 10000
+        }
+      }
+    },
+    {
+      "id": "ab1d554a-e318-4cf7-a718-e7cbfccebcbd",
+      "name": "Kuralları kontrol et",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "jsCode": "// Sipariş Ver ve Stok Bildirimi İste akışlarının ortak doğrulaması.\n// Vercel API zaten doğruluyor; bu katman webhook'a doğrudan gelen istekler için ikinci savunma hattı.\nconst input = $('Alt akış girişi').first().json;\nconst products = $input.first().json.products;\nconst errors = [];\n\nconst emailOk = typeof input.email === 'string' && /^[^\\s@<>()]+@[^\\s@<>()]+\\.[a-z]{2,}$/i.test(input.email);\nif (!emailOk) errors.push('geçersiz e-posta');\n\nif (!['order.create', 'stock.notify'].includes(input.event)) errors.push(`bilinmeyen event: ${input.event}`);\n\nconst product = products.find((p) => p.id === input.productId);\nif (!product) errors.push(`bilinmeyen ürün ID: ${input.productId}`);\n\nif (input.event === 'order.create') {\n  const q = Number(input.quantity);\n  if (!Number.isInteger(q) || q < 1 || q > 20) errors.push('adet 1-20 arasında olmalı');\n  if (product && !product.inStock) errors.push('tükenmiş ürüne sipariş verilemez');\n}\n\nreturn [{ json: { ...input, productCategory: product ? product.category : null, valid: errors.length === 0, errors } }];"
+      }
+    },
+    {
+      "id": "867c69ca-7327-49bb-ac9e-84572bf5c809",
+      "name": "Geçerli mi?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "84cdba97-4dde-4d8a-a7b6-60c7465db2b8",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "371b4cf4-b434-4c9d-a1cb-777681fd64db",
+      "name": "Temiz veri",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        -100
+      ],
+      "parameters": {
+        "jsCode": "const { valid, errors, ...data } = $input.first().json;\nreturn [{ json: data }];"
+      }
+    },
+    {
+      "id": "14c4ccbd-fa2d-4bc3-a296-0f7327aac44b",
+      "name": "Hata fırlat",
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        880,
+        100
+      ],
+      "parameters": {
+        "errorMessage": "={{ 'Doğrulama hatası: ' + $json.errors.join(', ') }}"
+      }
+    },
+    {
+      "id": "06ca806c-4647-4318-a154-226f4cf232a1",
+      "name": "Not",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -300
+      ],
+      "parameters": {
+        "content": "## Ortak doğrulama (Hafta 4 · Sub-workflow)\nSipariş ve stok akışlarının ikisi de bu alt akışı çağırır.\n\nGeçersiz veri (ör. bilinmeyen ürün ID) gelirse **Hata fırlat** çalışır; akış çöker ve ayarlardaki Error Workflow (**20 · Hata yakalayıcı**) devreye girer.",
+        "width": 560,
+        "height": 240,
+        "color": 7
+      }
+    }
+  ],
+  "connections": {
+    "Alt akış girişi": {
+      "main": [
+        [
+          {
+            "node": "products.json oku",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "products.json oku": {
+      "main": [
+        [
+          {
+            "node": "Kuralları kontrol et",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Kuralları kontrol et": {
+      "main": [
+        [
+          {
+            "node": "Geçerli mi?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Geçerli mi?": {
+      "main": [
+        [
+          {
+            "node": "Temiz veri",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Hata fırlat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Istanbul",
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "atkHataYakala001"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

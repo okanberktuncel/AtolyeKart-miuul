@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { FlatList, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -24,7 +25,10 @@ function CategoryTabs({ active, onSelect }: { active: string; onSelect: (id: str
 function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: (id: string) => void }) {
   return (
     <View style={styles.card}>
-      <Image source={{ uri: product.image }} style={styles.cardImage} />
+      <View>
+        <Image source={{ uri: product.image }} style={[styles.cardImage, !product.inStock && styles.soldOutImage]} />
+        {!product.inStock && <Text style={styles.stockBadge}>TÜKENDİ</Text>}
+      </View>
       <View style={styles.cardBody}>
         <Text style={styles.cardTitle}>{product.title}</Text>
         <Text style={styles.cardDesc} numberOfLines={3}>
@@ -34,10 +38,24 @@ function ProductCard({ product, onAddToCart }: { product: Product; onAddToCart: 
           <Text style={styles.cardPrice}>
             ₺{product.price} / {product.unit}
           </Text>
-          <Pressable style={styles.addBtn} onPress={() => onAddToCart(product.id)}>
-            <Text style={styles.addBtnText}>Sepete Ekle</Text>
-          </Pressable>
+          {product.inStock && (
+            <Pressable style={styles.outlineBtn} onPress={() => onAddToCart(product.id)}>
+              <Text style={styles.outlineBtnText}>Sepete Ekle</Text>
+            </Pressable>
+          )}
         </View>
+        {product.inStock ? (
+          <Pressable style={styles.addBtn} onPress={() => router.push({ pathname: '/siparis', params: { productId: product.id } })}>
+            <Text style={styles.addBtnText}>Sipariş Ver</Text>
+          </Pressable>
+        ) : (
+          <Pressable
+            style={styles.outlineBtn}
+            onPress={() => router.push({ pathname: '/stok-bildirimi', params: { productId: product.id } })}
+          >
+            <Text style={styles.outlineBtnText}>Stok Bildirimi İste</Text>
+          </Pressable>
+        )}
       </View>
     </View>
   );
@@ -77,6 +95,23 @@ const styles = StyleSheet.create({
   cardDesc: { fontSize: 13, color: Colors.textMuted, lineHeight: 18 },
   cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 },
   cardPrice: { fontWeight: '700', color: Colors.text },
-  addBtn: { backgroundColor: Colors.accent, borderRadius: 8, paddingVertical: 8, paddingHorizontal: 12 },
-  addBtnText: { color: '#fff', fontWeight: '600', fontSize: 12 },
+  soldOutImage: { opacity: 0.6 },
+  stockBadge: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    backgroundColor: Colors.text,
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  addBtn: { backgroundColor: Colors.accent, borderRadius: 8, paddingVertical: 10, paddingHorizontal: 12, alignItems: 'center', marginTop: 4 },
+  addBtnText: { color: '#fff', fontWeight: '600', fontSize: 13 },
+  outlineBtn: { borderWidth: 1, borderColor: Colors.accent, borderRadius: 8, paddingVertical: 8, paddingHorizontal: 12, alignItems: 'center' },
+  outlineBtnText: { color: Colors.accent, fontWeight: '600', fontSize: 12 },
 });

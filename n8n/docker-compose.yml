@@ -1,0 +1,81 @@
+# AtölyeKart local n8n ortamı (Hafta 3-6).
+# Kullanım (bu klasörde):
+#   cp .env.example .env            # değerleri doldur
+#   docker compose up -d            # n8n + Redis + Qdrant + Ollama
+#   docker compose --profile tunnel up -d   # + ngrok (Vercel/telefon n8n'e ulaşsın diye)
+# Kurulum adımlarının tamamı: n8n/README.md
+
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:2.44.6
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - GENERIC_TIMEZONE=Europe/Istanbul
+      - TZ=Europe/Istanbul
+      - N8N_SECURE_COOKIE=false
+      - N8N_DIAGNOSTICS_ENABLED=false
+      # Webhook URL'leri UI'da ngrok adresiyle görünsün (boşsa localhost kullanılır)
+      - WEBHOOK_URL=${N8N_PUBLIC_URL:-http://localhost:5678}
+      # Workflow'lar $env ile bu değerleri okur
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET}
+      - ATOLYEKART_SITE_URL=${ATOLYEKART_SITE_URL}
+      - ATOLYEKART_SHEET_ID=${ATOLYEKART_SHEET_ID}
+      - QDRANT_URL=http://qdrant:6333
+      # Read Files from Disk node'unun RAG PDF'lerini okuyabilmesi için
+      - N8N_RESTRICT_FILE_ACCESS_TO=/files
+    extra_hosts:
+      # Container içinden bilgisayardaki `npm run dev` (localhost:3000) adresine erişim
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./workflows:/import/workflows:ro
+      - ./credentials:/import/credentials:ro
+      - ./docs:/files/docs:ro
+    depends_on:
+      - redis
+      - qdrant
+
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  qdrant:
+    image: qdrant/qdrant:v1.13.6
+    restart: unless-stopped
+    ports:
+      - "6333:6333"   # dashboard: http://localhost:6333/dashboard
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  ollama:
+    image: ollama/ollama:0.12.6
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+
+  ngrok:
+    image: ngrok/ngrok:3
+    profiles: ["tunnel"]
+    restart: unless-stopped
+    command: ["http", "n8n:5678", "--url=${NGROK_DOMAIN}"]
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
+    ports:
+      - "4040:4040"   # ngrok trafik paneli: http://localhost:4040
+    depends_on:
+      - n8n
+
+volumes:
+  n8n_data:
+  redis_data:
+  qdrant_data:
+  ollama_data:

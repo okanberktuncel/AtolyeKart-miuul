@@ -1,0 +1,12 @@
+{
+  "name": "atolyekart",
+  "private": true,
+  "description": "AtölyeKart web sitesi + Vercel API route'ları",
+  "scripts": {
+    "dev": "node scripts/dev-server.js",
+    "test": "node --test \"tests/*.test.js\""
+  },
+  "engines": {
+    "node": ">=20.12"
+  }
+}

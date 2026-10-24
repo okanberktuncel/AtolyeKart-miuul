@@ -16,7 +16,8 @@ export default function RootLayout() {
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="gizlilik" options={{ title: 'Gizlilik Politikası' }} />
-        <Stack.Screen name="randevu" options={{ presentation: 'modal', title: 'Randevu Talep Et' }} />
+        <Stack.Screen name="siparis" options={{ presentation: 'modal', title: 'Sipariş Ver' }} />
+        <Stack.Screen name="stok-bildirimi" options={{ presentation: 'modal', title: 'Stok Bildirimi İste' }} />
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style="dark" />
